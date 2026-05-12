@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Trader {
+  id                  String         @id @default(cuid())
+  phoneNumber         String         @unique
+  businessName        String
+  squadVirtualAccount String         @unique
+  currentScore        Int            @default(0)
+  activeTier          String         @default("BASIC")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  kycProfile    KYCProfile?
+  transactions  Transaction[]
+  scoreLedger   ScoreLedger[]
+  circleMembers CircleMember[]
+}
+
+model KYCProfile {
+  id           String   @id @default(cuid())
+  traderId     String   @unique
+  encryptedBvn String?
+  encryptedNin String?
+  bvnVerified  Boolean  @default(false)
+  ninVerified  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  trader Trader @relation(fields: [traderId], references: [id])
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  traderId        String
+  amount          Float
+  senderAccount   String?
+  squadReference  String          @unique
+  transactionType TransactionType
+  timestamp       DateTime        @default(now())
+
+  trader Trader @relation(fields: [traderId], references: [id])
+}
+
+model ScoreLedger {
+  id            String   @id @default(cuid())
+  traderId      String
+  scoreChange   Int
+  newTotalScore Int
+  reason        String
+  timestamp     DateTime @default(now())
+
+  trader Trader @relation(fields: [traderId], references: [id])
+}
+
+model AjoCircle {
+  id                 String       @id @default(cuid())
+  potSize            Float
+  contributionAmount Float
+  cycleDuration      Int
+  status             CircleStatus @default(ACTIVE)
+  createdAt          DateTime     @default(now())
+
+  members CircleMember[]
+}
+
+model CircleMember {
+  id             String    @id @default(cuid())
+  circleId       String
+  traderId       String
+  payoutPosition Int
+  lockInEndDate  DateTime
+  hasDefaulted   Boolean   @default(false)
+
+  circle AjoCircle @relation(fields: [circleId], references: [id])
+  trader Trader    @relation(fields: [traderId], references: [id])
+}
+
+model WebhookEvent {
+  id               String           @id @default(cuid())
+  squadEventId     String           @unique
+  eventType        String
+  payload          Json
+  processingStatus ProcessingStatus @default(PENDING)
+  createdAt        DateTime         @default(now())
+}
+
+enum TransactionType {
+  INBOUND
+  OUTBOUND
+  AJO_CONTRIBUTION
+}
+
+enum CircleStatus {
+  ACTIVE
+  COMPLETED
+  DISSOLVED
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
