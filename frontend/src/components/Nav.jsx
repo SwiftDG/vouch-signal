@@ -39,6 +39,7 @@ export default function Nav() {
       <motion.button
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
+        onClick={() => (window.location.href = "/login")}
         className="font-['DM_Mono'] text-xs uppercase tracking-widest px-6 py-3 bg-[#A84551] text-white hover:bg-[#8B3541] transition-colors border-none cursor-pointer rounded-sm"
       >
         Get Started
