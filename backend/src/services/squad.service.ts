@@ -8,6 +8,10 @@ interface VirtualAccountPayload {
   mobile_num: string;
   email: string;
   bvn: string;
+  dob: string;
+  address: string;
+  gender: string;
+  beneficiary_account: string;
 }
 
 interface VirtualAccountResponse {
@@ -17,15 +21,24 @@ interface VirtualAccountResponse {
 export async function createVirtualAccount(
   payload: VirtualAccountPayload
 ): Promise<VirtualAccountResponse> {
-  const response = await axios.post<{ data: VirtualAccountResponse }>(
-    `${config.squadBaseUrl}/virtual-account`,
-    payload,
-    {
-      headers: {
-        Authorization: `Bearer ${config.squadSecretKey}`,
-        'Content-Type': 'application/json',
-      },
+  try {
+    const response = await axios.post<{ data: VirtualAccountResponse }>(
+      `${config.squadBaseUrl}/virtual-account`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${config.squadSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Squad API error:', error.response?.data);
     }
-  );
-  return response.data.data;
+    throw error;
+  }
 }
+
+
