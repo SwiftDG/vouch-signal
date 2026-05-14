@@ -3,21 +3,24 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-- Unit 01: Project Setup & Schema Migration
+- Unit 05: Fraud Detection & Ajo Mechanics
 
 ## Current Goal
-- Initialize the Express/TypeScript backend environment and execute the initial Prisma database schema migration.
+- Implement circular fraud detection via PostgreSQL Recursive CTEs and reward consistent Ajo recurring payment behaviour.
 
 ## Completed
 - Defined `project-overview.md`, `architecture.md`, `code-standards.md`, `ai-workflow-rules.md`.
-- **Unit 01**: `package.json`, `tsconfig.json` (strict mode), `prisma/schema.prisma` (all 7 models + enums), `src/config/env.ts` (typed env validation), `src/routes/health.route.ts`, `src/server.ts`. Prisma client generated. `npm run build` passes with zero TypeScript errors.
+- ✅ **Unit 01 — COMPLETE**: `package.json`, `tsconfig.json` (strict mode), `prisma/schema.prisma` (all 7 models + enums), `src/config/env.ts` (typed env validation), `src/routes/health.route.ts`, `src/server.ts`. Prisma client generated. `npm run build` passes with zero TypeScript errors. Pushed to `main` on GitHub.
+- ✅ **Unit 02 — COMPLETE**: `src/middlewares/auth.middleware.ts` (Supabase JWT), `src/utils/crypto.util.ts` (AES-256-GCM BVN encryption), `src/services/squad.service.ts` (virtual account creation), `src/controllers/trader.controller.ts`, `src/routes/trader.route.ts`. `POST /api/v1/traders/onboard` mounted. Zero TypeScript errors. Pushed to `feat/02-identity-onboarding` on GitHub.
+- ✅ **Unit 03 — COMPLETE**: `src/middlewares/webhook.middleware.ts` (HMAC SHA-512), `src/controllers/webhook.controller.ts` (idempotency + async handoff), `src/routes/webhook.route.ts`. `POST /api/v1/webhooks/squad` mounted. Zero TypeScript errors.
+- ✅ **Unit 04 — COMPLETE**: `src/engine/scoring.engine.ts` (calculateScoreDelta — volume/consistency/diversity), `src/services/transaction.service.ts` (Transaction save + atomic ledger commit), webhook controller wired. `server.ts` fixed to mount webhook router before `express.json()`. Zero TypeScript errors.
+- **Unit 05 — IN PROGRESS**: `src/engine/fraud.detector.ts` (Recursive CTE 4-hop cycle detection, -150 penalty), `src/services/ajo.service.ts` (recurring.completed +40 / recurring.failed -60), webhook controller extended, fraud check wired into transaction service. Zero TypeScript errors.
 
 ## In Progress
 - None.
 
 ## Next Up
-- **Unit 02**: Security middleware (Supabase JWT), crypto utility (BVN encryption), Squad virtual account service, `POST /api/v1/traders/onboard` endpoint.
-- Run `npx prisma db push` once Supabase direct connection is reachable (port 5432 must be open from your network).
+- **Unit 06**: Tier evaluation post-score hook, Squad Transfer API disbursement.
 
 ## Open Questions
 - What specific metrics (e.g., exact weighting of transaction consistency vs. Ajo defaults) will the AI Scoring Engine use, or should that be stubbed initially?

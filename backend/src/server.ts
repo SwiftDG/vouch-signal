@@ -3,8 +3,12 @@ import express, { Request, Response, NextFunction } from 'express';
 import { config } from './config/env';
 import healthRouter from './routes/health.route';
 import traderRouter from './routes/trader.route';
+import webhookRouter from './routes/webhook.route';
 
 const app = express();
+
+// Webhook route must be mounted before express.json() so the raw body stream is intact for HMAC verification
+app.use('/api/v1/webhooks', webhookRouter);
 
 app.use(express.json());
 

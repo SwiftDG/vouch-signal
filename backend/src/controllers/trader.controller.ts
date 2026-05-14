@@ -12,6 +12,10 @@ interface OnboardPayload {
   lastName: string;
   email: string;
   bvn: string;
+  dob: string;
+  address: string;
+  gender: string;
+  beneficiaryAccount: string;
 }
 
 function isOnboardPayload(body: unknown): body is OnboardPayload {
@@ -23,7 +27,11 @@ function isOnboardPayload(body: unknown): body is OnboardPayload {
     typeof b['firstName'] === 'string' &&
     typeof b['lastName'] === 'string' &&
     typeof b['email'] === 'string' &&
-    typeof b['bvn'] === 'string'
+    typeof b['bvn'] === 'string' &&
+    typeof b['dob'] === 'string' &&
+    typeof b['address'] === 'string' &&
+    typeof b['gender'] === 'string' &&
+    typeof b['beneficiaryAccount'] === 'string'
   );
 }
 
@@ -33,7 +41,7 @@ export async function onboardTrader(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const { phoneNumber, businessName, firstName, lastName, email, bvn } = req.body;
+  const { phoneNumber, businessName, firstName, lastName, email, bvn, dob, address, gender, beneficiaryAccount } = req.body;
 
   const encryptedBvn = encrypt(bvn);
 
@@ -44,6 +52,10 @@ export async function onboardTrader(req: Request, res: Response): Promise<void> 
     mobile_num: phoneNumber,
     email,
     bvn,
+    dob,
+    address,
+    gender,
+    beneficiary_account: beneficiaryAccount,
   });
 
   const trader = await prisma.trader.create({
