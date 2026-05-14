@@ -11,7 +11,7 @@
 | Integration | Squad API                   | Generation of Virtual Accounts, payment gateway, and fund disbursements |
 
 ## System Boundaries
-
+- Use https://docs.squadco.com/ to check docs on the squad apis
 ## System Boundaries
 
 - `src/routes` — Owns all API endpoints, including the external Lender API and the inbound Squad webhook listener.

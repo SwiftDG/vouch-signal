@@ -7,11 +7,12 @@ or making any architectural decision:
    goals, features, and scope
 2. `context/architecture.md` — system structure,
    boundaries, storage model, and invariants
-3. `context/code-standards.md` — implementation rules
+3. `context/squad-api-full-reference.md` - Squad API Review
+4. `context/code-standards.md` — implementation rules
    and conventions
-4. `context/ai-workflow-rules.md` — development workflow,
+5. `context/ai-workflow-rules.md` — development workflow,
    scoping rules, and delivery approach
-5. `context/progress-tracker.md` — current phase,
+6. `context/progress-tracker.md` — current phase,
    completed work, open questions, and next steps
 
 Update `context/progress-tracker.md` after each

@@ -57,12 +57,12 @@ Map `POST /api/v1/traders/onboard`. Extract payload, encrypt BVN, call Squad ser
 - `crypto` (Built-in Node.js module)
 
 ## Verify when done
-- [ ] Endpoint successfully generates a Squad Virtual Account
-- [ ] BVN is visually encrypted in the database (not plain text)
-- [ ] No TypeScript errors
-- [ ] No console errors
-- [ ] API responds consistently via Postman/cURL
-- [ ] `npm run build` passes
+- [x] Endpoint successfully generates a Squad Virtual Account
+- [x] BVN is visually encrypted in the database (not plain text)
+- [x] No TypeScript errors
+- [x] No console errors
+- [x] API responds consistently via Postman/cURL
+- [x] `npm run build` passes
 
 ---
 
@@ -89,12 +89,12 @@ Before logging, query `WebhookEvent` using the `squadEventId`. If it exists, abo
 - None (Uses built-in `crypto` for HMAC)
 
 ## Verify when done
-- [ ] Invalid signatures are rejected with 401 Unauthorized
-- [ ] Duplicate `squadEventId` payloads are safely ignored
-- [ ] No TypeScript errors
-- [ ] No console errors
-- [ ] API responds consistently via Postman/cURL
-- [ ] `npm run build` passes
+- [x] Invalid signatures are rejected with 401 Unauthorized
+- [x] Duplicate `squadEventId` payloads are safely ignored
+- [x] No TypeScript errors
+- [x] No console errors
+- [X] API responds consistently via Postman/cURL
+- [X] `npm run build` passes
 
 ---
 
@@ -121,12 +121,12 @@ Update the `Trader`'s score and insert a `ScoreLedger` row detailing the point c
 - None
 
 ## Verify when done
-- [ ] Simulated inbound payment increases the trader's score
-- [ ] A corresponding reason string appears in `ScoreLedger`
-- [ ] No TypeScript errors
-- [ ] No console errors
-- [ ] API responds consistently via Postman/cURL
-- [ ] `npm run build` passes
+- [x] Simulated inbound payment increases the trader's score
+- [x] A corresponding reason string appears in `ScoreLedger`
+- [x] No TypeScript errors
+- [x] No console errors
+- [x] API responds consistently via Postman/cURL
+- [x] `npm run build` passes
 
 ---
 
