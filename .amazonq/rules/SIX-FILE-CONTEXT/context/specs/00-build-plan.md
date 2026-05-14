@@ -69,7 +69,7 @@ Map `POST /api/v1/traders/onboard`. Extract payload, encrypt BVN, call Squad ser
 # Unit 03: Webhook Intake & Idempotency Layer
 
 ## Goal
-Securely receive Squad payment webhooks, verify their cryptographic signatures, and enforce strict idempotency to prevent duplicate processing.
+Securely receive Squad payment webhooks v3, verify their cryptographic signatures, and enforce strict idempotency to prevent duplicate processing.
 
 ## Design
 Event-driven webhook sink. Must return a synchronous 200 OK response immediately after signature verification to prevent Squad API timeouts.
@@ -98,35 +98,51 @@ Before logging, query `WebhookEvent` using the `squadEventId`. If it exists, abo
 
 ---
 
-# Unit 04: AI Scoring Engine & Transaction Ledger
+# Unit 04: The Vouch Engine Integration
 
 ## Goal
-Process verified `charge.completed` webhooks to dynamically calculate the Market Reputation Score and append the result to the history ledger.
+Implement the deterministic credit scoring algorithm (`VouchEngine.ts`). The engineering team must write the necessary Prisma aggregation queries to map database records into the `UserData` object expected by the engine, and unit-test the exact mathematical boundaries.
 
 ## Design
-Deterministic scoring boundary. Follows the Weighted-Logistic scoring algorithm. `Trader.currentScore` and `ScoreLedger` must be updated within a single Prisma database transaction.
+The scoring engine is implemented as a standalone TypeScript class in the service layer (`src/services/engine/VouchEngine.ts`). It accepts sanitized `UserData` and returns a structured `FinalProfile` object. The Service Layer is responsible for heavy database aggregation, while the Engine is strictly responsible for the math.
 
-## Implementation
+## Implementation Details
 
-### Scoring Algorithm
-Implement `calculateScoreDelta` in `src/engine/scoring.engine.ts` using volume, consistency, and diversity metrics.
+### The DB Aggregation Requirements (Service Layer Job)
+Before calling the engine, the backend must query the transaction history and provide:
+* `months_active`: Calculated from the user's creation date.
+* `unique_tx_this_month`: The count of unique Squad IDs in the last 30 days.
+* `daily_consistency_points`: Sum of points over 30 days (unique senders * 3), capped at 15 points per day.
+* `repeat_senders_this_month`: Count of senders in the last 30 days who also have history prior to this window.
+* `new_senders_this_month`: Count of brand new senders in the last 30 days.
+* `actual_30_day_volume`: Summed Naira value of all successful Squad transactions in the last 30 days.
+* `outstanding_balance`, `previous_tier`, and `months_in_default` to drive the utilization penalty edge cases.
 
-### Transaction Service
-Parse the raw webhook payload, save the `Transaction` record, and pass the data to the Engine.
+### The Algorithm Structure (Engine Math)
+1. **Variable A (Age & Activity):** +12 points per active month, capped at 150 points. Requires `unique_tx_this_month` >= 10 to activate.
+2. **Variable B (Consistency):** Driven by `daily_consistency_points`. Capped at 300 points.
+3. **Variable C (Network Retention):** Repeat senders * 13 + New senders * 7. Capped at 250 points.
+4. **Variable D (Volume Scaling):** Base Score (A+B+C) maps to an initial tier. Points = (`actual_30_day_volume` / Target Volume) * Max Volume Points. Tier 1 gets 0 volume points.
+5. **Safety Brakes (Risk Assessment):**
+   * **Utilization Penalty:** If debt > 80% of limit, applies a -50 point penalty. Compounds by multiplying by `(1 + months_in_default)`.
+   * **Soft Landing:** If an organic tier drop leaves debt > new limit, waives the penalty and sets state to `Repayment-Only`.
 
-### Ledger Commit
-Update the `Trader`'s score and insert a `ScoreLedger` row detailing the point change and reason using `prisma.$transaction`.
+### B2B Fast-Track Logic
+- Run `evaluateB2bFastTrack()` strictly on Day 31 of a business's probation.
+- Requires a 70% threshold (`squadVolume` / `claimedVolume` >= 0.70).
+- True: Unlocks target tier instantly. False: Falls back to organic score via `calculateFinalProfile()`.
 
 ## Dependencies
-- None
+- Prisma Client (for complex aggregations and time-window queries).
+- Jest (Crucial for testing the exact mathematical caps and edge cases).
 
 ## Verify when done
-- [x] Simulated inbound payment increases the trader's score
-- [x] A corresponding reason string appears in `ScoreLedger`
-- [x] No TypeScript errors
-- [x] No console errors
-- [x] API responds consistently via Postman/cURL
-- [x] `npm run build` passes
+- [ ] `calculateVariableA` properly zeros out if `unique_tx_this_month` is 9 or less.
+- [ ] `calculateVariableC` mathematically caps at exactly 250, even if there are 100 repeat senders.
+- [ ] Tier 1 users strictly receive 0 volume points, regardless of transaction sizes.
+- [ ] The `processSafetyBrakes` correctly shifts a user to `Repayment-Only` if their tier drops below their outstanding debt limit, without applying the -50 penalty.
+- [ ] B2B Fast-Track successfully reverts to organic scoring if the volume match is 69.9% or lower.
+- [ ] Unit tests cover penalty compounding (e.g., 2 months in default = -100 points).
 
 ---
 

@@ -15,21 +15,14 @@ export function requireSupabaseAuth(
     return;
   }
 
-  // Try plain secret first, then base64-decoded (Supabase uses base64-encoded secret)
-  const secrets = [
-    config.supabaseJwtSecret,
-    Buffer.from(config.supabaseJwtSecret, 'base64'),
-  ];
-
-  for (const secret of secrets) {
-    try {
-      verify(token, secret, { algorithms: ['HS256'] });
-      next();
-      return;
-    } catch {
-      // try next secret
-    }
+  try {
+    const decoded = verify(token, config.supabaseJwtSecret, {
+      algorithms: ['HS256'],
+      audience: 'authenticated',
+    });
+    (req as any).user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ data: null, error: 'Invalid or expired token' });
   }
-
-  res.status(401).json({ data: null, error: 'Invalid or expired token' });
 }

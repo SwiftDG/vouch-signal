@@ -9,14 +9,17 @@ datasource db {
 }
 
 model Trader {
-  id                  String         @id @default(cuid())
-  phoneNumber         String         @unique
-  businessName        String
-  squadVirtualAccount String         @unique
-  currentScore        Int            @default(0)
-  activeTier          String         @default("BASIC")
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  id                   String         @id @default(cuid())
+  phoneNumber          String         @unique
+  businessName         String
+  squadVirtualAccount  String         @unique
+  currentScore         Int            @default(0)
+  activeTier           Int            @default(1)
+  previousTier         Int            @default(1)
+  creditLimit          Float          @default(0)
+  outstandingBalance   Float          @default(0)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 
   kycProfile    KYCProfile?
   transactions  Transaction[]

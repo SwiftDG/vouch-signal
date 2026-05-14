@@ -19,7 +19,7 @@ export async function detectCircularFraud(
       -- Base: all transactions sent FROM the origin account in the last 24 hours
       SELECT
         t."senderAccount" AS source,
-        t."squadVirtualAccount_receiver" AS destination,
+        tr."squadVirtualAccount" AS destination,
         1 AS depth
       FROM "Transaction" t
       INNER JOIN "Trader" tr ON tr.id = t."traderId"
@@ -30,14 +30,14 @@ export async function detectCircularFraud(
 
       -- Recursive: follow the money one hop further
       SELECT
-        t."senderAccount",
+        t2."senderAccount",
         tr2."squadVirtualAccount",
         tg.depth + 1
-      FROM "Transaction" t
-      INNER JOIN "Trader" tr2 ON tr2.id = t."traderId"
-      INNER JOIN transfer_graph tg ON tg.destination = t."senderAccount"
+      FROM "Transaction" t2
+      INNER JOIN "Trader" tr2 ON tr2.id = t2."traderId"
+      INNER JOIN transfer_graph tg ON tg.destination = t2."senderAccount"
       WHERE tg.depth < 4
-        AND t."timestamp" >= NOW() - INTERVAL '24 hours'
+        AND t2."timestamp" >= NOW() - INTERVAL '24 hours'
     )
     SELECT EXISTS (
       SELECT 1 FROM transfer_graph

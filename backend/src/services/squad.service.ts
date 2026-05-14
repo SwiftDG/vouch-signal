@@ -30,14 +30,12 @@ export async function createVirtualAccount(
           Authorization: `Bearer ${config.squadSecretKey}`,
           'Content-Type': 'application/json',
         },
+        timeout: 10000,
       }
     );
     return response.data.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Squad API error:', error.response?.data);
-    }
-    throw error;
+    throw new Error(`Squad API failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

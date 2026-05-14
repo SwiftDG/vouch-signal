@@ -21,3 +21,4 @@ meaningful implementation change.
 If implementation changes the architecture, scope, or
 standards documented in the context files, update the
 relevant file before continuing.
+You are not to create a test file just tell me how to test it on postman
