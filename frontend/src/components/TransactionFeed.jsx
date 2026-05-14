@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { CreditCard } from "lucide-react";
 
 function timeAgo(date) {
   const diff = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -39,7 +40,7 @@ export default function TransactionFeed({ transactions }) {
       {transactions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-12 h-12 rounded-full bg-[#F5F0F1] flex items-center justify-center mb-4">
-            <span className="text-xl">💳</span>
+            <CreditCard />
           </div>
           <p className="font-['Inter'] text-sm text-[#8A6B70] mb-1">
             No transactions yet

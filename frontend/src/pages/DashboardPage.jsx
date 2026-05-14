@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { TrendingUp } from "lucide-react";
 import ScoreCard from "../components/ScoreCard";
 import TransactionFeed from "../components/TransactionFeed";
 import LoanUnlock from "../components/LoanUnlock";
+import AnimatedBackground from "../components/AnimatedBackground";
 
-const SIMULATE_URL = "http://localhost:3000/api/v1/simulate"; // swap when Emmanuel deploys
+const SIMULATE_URL = "http://localhost:3000/api/v1/simulate";
 
 const MOCK_TRADERS = [
   { name: "Chidi Okafor", amount: 3500 },
@@ -16,21 +19,6 @@ const MOCK_TRADERS = [
   { name: "Kunle Adeyemi", amount: 2300 },
   { name: "Blessing Nwosu", amount: 6700 },
 ];
-
-function generateTransaction() {
-  const sender = MOCK_TRADERS[Math.floor(Math.random() * MOCK_TRADERS.length)];
-  const isRepeat = Math.random() > 0.5;
-  const points = isRepeat ? 13 : 7;
-  return {
-    id: Date.now() + Math.random(),
-    sender: sender.name,
-    amount: sender.amount + Math.floor(Math.random() * 1000),
-    points,
-    isRepeat,
-    timestamp: new Date(),
-    status: "verified",
-  };
-}
 
 function getTier(score) {
   if (score >= 800)
@@ -44,27 +32,57 @@ function getTier(score) {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [score, setScore] = useState(142);
+  const [score, setScore] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [loanAccepted, setLoanAccepted] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [tierFlash, setTierFlash] = useState(false);
+  const seenSenders = useRef(new Set());
+  const prevTierRef = useRef(1);
 
   const tierInfo = getTier(score);
-  const prevTierInfo = getTier(score - 1);
-  const justUnlocked = tierInfo.tier > prevTierInfo.tier;
+
+  function generateTransaction() {
+    const sender =
+      MOCK_TRADERS[Math.floor(Math.random() * MOCK_TRADERS.length)];
+    const isRepeat = seenSenders.current.has(sender.name);
+    seenSenders.current.add(sender.name);
+    const volumePoints = Math.min(Math.floor(sender.amount / 1000) * 2 + 5, 20);
+    const consistencyPoints = Math.floor(Math.random() * 3) * 4 + 3;
+    const diversityPoints = Math.min(seenSenders.current.size * 2, 10);
+    const points = volumePoints + consistencyPoints + diversityPoints;
+    return {
+      id: Date.now() + Math.random(),
+      sender: sender.name,
+      amount: sender.amount + Math.floor(Math.random() * 1000),
+      points,
+      isRepeat,
+      timestamp: new Date(),
+      status: "verified",
+    };
+  }
+
+  useEffect(() => {
+    const currentTier = getTier(score).tier;
+    if (currentTier > prevTierRef.current) {
+      prevTierRef.current = currentTier;
+      setTierFlash(true);
+      setTimeout(() => setTierFlash(false), 3000);
+    }
+  }, [score]);
 
   const simulate = useCallback(async () => {
     if (simulating) return;
     setSimulating(true);
+    setLoanAccepted(false);
+    seenSenders.current.clear();
 
-    // Try real endpoint first, fall back to mock
     try {
       await fetch(SIMULATE_URL, { method: "POST" });
     } catch {
-      // Backend not ready yet — use mock
+      // Backend not ready — using mock
     }
 
-    // Fire 8 transactions with 400ms gap
     for (let i = 0; i < 8; i++) {
       await new Promise((r) => setTimeout(r, 400));
       const tx = generateTransaction();
@@ -75,7 +93,6 @@ export default function DashboardPage() {
     setSimulating(false);
   }, [simulating]);
 
-  // Secret keyboard shortcut — Shift+S
   useEffect(() => {
     const handleKey = (e) => {
       if (e.shiftKey && e.key === "S") simulate();
@@ -85,69 +102,85 @@ export default function DashboardPage() {
   }, [simulate]);
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Top nav */}
-      <nav className="bg-white border-b border-[#E8DDE0] px-6 md:px-12 py-4 flex items-center justify-between">
-        <div className="font-['Syne'] font-bold text-xl text-[#1A0A0D]">
-          Vouch<span className="text-[#A84551]">Signal</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#A84551] flex items-center justify-center">
-              <span className="font-['Inter'] text-xs text-white font-bold">
-                MN
+    <div className="relative min-h-screen bg-white">
+      <AnimatedBackground />
+      <div className="relative z-10">
+        <nav className="bg-white/80 backdrop-blur-md border-b border-[#E8DDE0] px-6 md:px-12 py-4 flex items-center justify-between">
+          <div
+            onClick={() => (window.location.href = "/")}
+            className="font-['Syne'] font-bold text-xl text-[#1A0A0D] cursor-pointer"
+          >
+            Vouch<span className="text-[#A84551]">Signal</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#A84551] flex items-center justify-center">
+                <span className="font-['Inter'] text-xs text-white font-bold">
+                  MN
+                </span>
+              </div>
+              <span className="font-['Inter'] text-sm text-[#1A0A0D] hidden md:block">
+                Mama Ngozi
               </span>
             </div>
-            <span className="font-['Inter'] text-sm text-[#1A0A0D] hidden md:block">
-              Mama Ngozi
-            </span>
+            <button
+              onClick={() => navigate("/login")}
+              className="font-['Inter'] text-xs text-[#8A6B70] hover:text-[#A84551] transition-colors cursor-pointer border-none bg-transparent"
+            >
+              Sign out
+            </button>
           </div>
-          <button
-            onClick={() => navigate("/login")}
-            className="font-['Inter'] text-xs text-[#8A6B70] hover:text-[#A84551] transition-colors cursor-pointer border-none bg-transparent"
-          >
-            Sign out
-          </button>
+        </nav>
+
+        <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
+          <div className="mb-8">
+            <h1 className="font-['Syne'] font-bold text-3xl text-[#1A0A0D] mb-1">
+              Good morning, Mama Ngozi 👋
+            </h1>
+            <p className="font-['Inter'] text-sm text-[#8A6B70]">
+              Balogun Fabric Store · Squad Virtual Account Active
+            </p>
+          </div>
+
+          <AnimatePresence>
+            {tierFlash && (
+              <motion.div
+                initial={{ opacity: 0, y: -16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.4 }}
+                className="bg-[#A84551] text-white px-6 py-3 mb-4 flex items-center gap-3"
+              >
+                <TrendingUp size={18} />
+                <span className="font-['Inter'] font-semibold text-sm">
+                  Tier upgrade! You've reached {tierInfo.label} — new credit
+                  limit unlocked.
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {tierInfo.limit > 0 && (
+            <LoanUnlock
+              limit={tierInfo.limit}
+              tier={tierInfo.tier}
+              tierLabel={tierInfo.label}
+              accepted={loanAccepted}
+              onAccept={() => setLoanAccepted(true)}
+            />
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <ScoreCard score={score} tier={tierInfo} simulating={simulating} />
+            <TransactionFeed transactions={transactions} />
+          </div>
         </div>
-      </nav>
 
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-['Syne'] font-bold text-3xl text-[#1A0A0D] mb-1">
-            Good morning, Mama Ngozi 👋
-          </h1>
-          <p className="font-['Inter'] text-sm text-[#8A6B70]">
-            Balogun Fabric Store · Squad Virtual Account Active
-          </p>
-        </div>
-
-        {/* Loan unlock banner */}
-        {tierInfo.limit > 0 && (
-          <LoanUnlock
-            limit={tierInfo.limit}
-            tier={tierInfo.tier}
-            tierLabel={tierInfo.label}
-            accepted={loanAccepted}
-            onAccept={() => setLoanAccepted(true)}
-          />
-        )}
-
-        {/* Main grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <ScoreCard score={score} tier={tierInfo} simulating={simulating} />
-          <TransactionFeed transactions={transactions} />
-        </div>
-
-        {/* Secret simulate button — small, hidden in corner */}
-        <div className="fixed bottom-6 right-6 flex flex-col items-end gap-2">
-          <p className="font-['Inter'] text-xs text-[#8A6B70] opacity-50">
-            Press Shift+S to simulate
-          </p>
+        <div className="fixed bottom-6 right-6">
           <button
             onClick={simulate}
             disabled={simulating}
-            className="w-3 h-3 rounded-full bg-[#A84551] opacity-20 hover:opacity-100 transition-opacity cursor-pointer border-none"
+            className="w-3 h-3 rounded-full bg-[#A84551] opacity-0 hover:opacity-30 transition-opacity cursor-pointer border-none"
           />
         </div>
       </div>

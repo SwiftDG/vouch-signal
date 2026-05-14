@@ -1,11 +1,45 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+function AnimatedBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <motion.div
+        className="absolute inset-0"
+        animate={{
+          background: [
+            "linear-gradient(135deg, #ffffff 0%, #ffffff 45%, rgba(168,69,81,0.15) 65%, rgba(196,96,110,0.25) 80%, rgba(255,182,193,0.3) 100%)",
+            "linear-gradient(135deg, #ffffff 0%, #ffffff 40%, rgba(196,96,110,0.2) 60%, rgba(168,69,81,0.3) 75%, rgba(255,150,170,0.25) 100%)",
+            "linear-gradient(135deg, #ffffff 0%, #ffffff 50%, rgba(168,69,81,0.12) 68%, rgba(220,100,120,0.28) 85%, rgba(255,182,193,0.2) 100%)",
+            "linear-gradient(135deg, #ffffff 0%, #ffffff 45%, rgba(168,69,81,0.15) 65%, rgba(196,96,110,0.25) 80%, rgba(255,182,193,0.3) 100%)",
+          ],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </div>
+  );
+}
+
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.15 } },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 32 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      <AnimatedBackground />
+
       {/* Background blobs */}
       <motion.div
         className="absolute w-96 h-96 rounded-full"
@@ -125,7 +159,14 @@ export default function LoginPage() {
           </motion.button>
 
           <p className="font-['Inter'] text-xs text-[#8A6B70] text-center mt-4">
-            Demo mode — no OTP required. For live pitch use only.
+            Demo mode: no OTP required. For live pitch use only.
+          </p>
+
+          <p className="font-['Inter'] text-xs text-[#8A6B70] text-center mt-6">
+            Don't have an account?{" "}
+            <a href="/signup" className="text-[#A84551] hover:underline">
+              Sign up free
+            </a>
           </p>
         </motion.div>
 

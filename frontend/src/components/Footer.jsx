@@ -63,7 +63,7 @@ export default function Footer() {
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="font-['Inter'] text-xs text-white/30">
-            © 2026 VouchSignal. Built for Squad Hackathon 3.0.
+            © 2026 VouchSignal.
           </p>
           <p className="font-['Inter'] text-xs text-white/30">
             Powered by Squad · GTCo · HabariPay

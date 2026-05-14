@@ -63,7 +63,7 @@ export default function Hero() {
             <motion.button
               whileHover={{ scale: 1.03, backgroundColor: "#8B3541" }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => (window.location.href = "/login")}
+              onClick={() => (window.location.href = "/signup")}
               className="font-['Inter'] font-semibold text-sm px-8 py-4 bg-[#A84551] text-white border-none cursor-pointer rounded-md transition-colors"
             >
               Get Started →

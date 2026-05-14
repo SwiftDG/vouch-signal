@@ -1,19 +1,20 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { Unlock, CheckCircle, Rocket, Diamond } from "lucide-react";
 
 const TIER_LABELS = {
   2: {
-    emoji: "🎉",
+    emoji: <Unlock />,
     title: "Microloan Unlocked!",
     desc: "Your consistency has earned you access to working capital.",
   },
   3: {
-    emoji: "🚀",
+    emoji: <Rocket />,
     title: "Inventory Financing Unlocked!",
     desc: "Scale your business with larger inventory credit.",
   },
   4: {
-    emoji: "💎",
+    emoji: <Diamond />,
     title: "Enterprise Credit Unlocked!",
     desc: "Maximum credit access. You've built something real.",
   },
@@ -66,7 +67,7 @@ export default function LoanUnlock({
               animate={accepted ? {} : { scale: [1, 1.2, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
             >
-              {accepted ? "✅" : info.emoji}
+              {accepted ? <CheckCircle /> : info.emoji}
             </motion.span>
             <div>
               <p className="font-['Syne'] font-bold text-lg text-[#1A0A0D]">

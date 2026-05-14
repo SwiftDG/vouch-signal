@@ -7,6 +7,7 @@ import ScoreDisplay from "../components/ScoreDisplay";
 import SquadAPIs from "../components/SquadAPIs";
 import CTA from "../components/CTA";
 import Footer from "../components/Footer";
+import About from "../components/About";
 
 export default function HomePage() {
   return (
@@ -24,6 +25,7 @@ export default function HomePage() {
       <HowItWorks />
       <ScoreDisplay />
       <SquadAPIs />
+      <About />
       <CTA />
       <Footer />
     </div>
