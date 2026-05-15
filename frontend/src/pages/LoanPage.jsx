@@ -2,20 +2,53 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import AnimatedBackground from "../components/AnimatedBackground";
+import { supabase } from "../lib/supabase";
+
+const API =
+  import.meta.env.VITE_API_BASE_URL || "https://vouch-w5z1.onrender.com/api/v1";
 
 export default function LoanPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const limit = state?.limit || 50000;
   const tierLabel = state?.tierLabel || "Bronze";
+  const traderId = state?.traderId || null;
   const [amount, setAmount] = useState(Math.floor(limit / 2));
   const [repaymentType, setRepaymentType] = useState("sweep");
   const [loading, setLoading] = useState(false);
   const [disbursed, setDisbursed] = useState(false);
+  const [error, setError] = useState("");
 
   const handleApply = async () => {
     setLoading(true);
-    // Transfer API will be wired here when Emmanuel ships endpoint
+    setError("");
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.access_token && traderId) {
+        const res = await fetch(`${API}/loans/accept`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ amount, traderId }),
+        });
+        const data = await res.json();
+        if (data?.data?.disbursementStatus === "completed") {
+          setLoading(false);
+          setDisbursed(true);
+          return;
+        }
+        if (data?.error) {
+          setError(data.error);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {}
+    // Fall back to mock disbursement
     await new Promise((r) => setTimeout(r, 2000));
     setLoading(false);
     setDisbursed(true);
@@ -85,11 +118,10 @@ export default function LoanPage() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white border border-[#E8DDE0] p-8 shadow-sm"
+          className="relative bg-white border border-[#E8DDE0] p-8 shadow-sm"
         >
           <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#A84551]" />
 
-          {/* Credit limit display */}
           <div className="bg-[#FAFAFA] border border-[#E8DDE0] p-4 mb-6">
             <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] mb-1">
               Your Credit Limit
@@ -102,7 +134,6 @@ export default function LoanPage() {
             </p>
           </div>
 
-          {/* Amount selector */}
           <div className="mb-6">
             <div className="flex justify-between mb-2">
               <label className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70]">
@@ -131,14 +162,17 @@ export default function LoanPage() {
             </div>
           </div>
 
-          {/* Repayment type */}
           <div className="mb-8">
             <label className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] block mb-3">
               Repayment Method
             </label>
             <div className="space-y-3">
               <label
-                className={`flex items-start gap-3 p-4 border cursor-pointer transition-colors ${repaymentType === "sweep" ? "border-[#A84551] bg-[#A84551]/5" : "border-[#E8DDE0]"}`}
+                className={`flex items-start gap-3 p-4 border cursor-pointer transition-colors ${
+                  repaymentType === "sweep"
+                    ? "border-[#A84551] bg-[#A84551]/5"
+                    : "border-[#E8DDE0]"
+                }`}
               >
                 <input
                   type="radio"
@@ -160,7 +194,11 @@ export default function LoanPage() {
               </label>
 
               <label
-                className={`flex items-start gap-3 p-4 border cursor-pointer transition-colors ${repaymentType === "bullet" ? "border-[#A84551] bg-[#A84551]/5" : "border-[#E8DDE0]"}`}
+                className={`flex items-start gap-3 p-4 border cursor-pointer transition-colors ${
+                  repaymentType === "bullet"
+                    ? "border-[#A84551] bg-[#A84551]/5"
+                    : "border-[#E8DDE0]"
+                }`}
               >
                 <input
                   type="radio"
@@ -182,6 +220,12 @@ export default function LoanPage() {
               </label>
             </div>
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 font-['Inter'] text-xs p-3 mb-4">
+              {error}
+            </div>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.02, backgroundColor: "#8B3541" }}

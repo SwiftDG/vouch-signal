@@ -8,8 +8,8 @@ import TransactionFeed from "../components/TransactionFeed";
 import LoanUnlock from "../components/LoanUnlock";
 import AnimatedBackground from "../components/AnimatedBackground";
 
-const SIMULATE_URL =
-  "https://vouch-w5z1.onrender.com/api/v1/debug/simulate-history";
+const API =
+  import.meta.env.VITE_API_BASE_URL || "https://vouch-w5z1.onrender.com/api/v1";
 
 const MOCK_TRADERS = [
   { name: "Chidi Okafor", amount: 3500 },
@@ -32,6 +32,15 @@ function getTier(score) {
   return { tier: 1, label: "Probation", limit: 0, next: 400 };
 }
 
+async function getAuthHeader() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [score, setScore] = useState(0);
@@ -39,14 +48,93 @@ export default function DashboardPage() {
   const [loanAccepted, setLoanAccepted] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [tierFlash, setTierFlash] = useState(false);
+  const [user, setUser] = useState(null);
+  const [traderId, setTraderId] = useState(null);
+  const [isDemo, setIsDemo] = useState(false);
   const seenSenders = useRef(new Set());
   const prevTierRef = useRef(1);
-  const [user, setUser] = useState(null);
+  const sseRef = useRef(null);
+  const currentScoreRef = useRef(0);
+
+  const tierInfo = getTier(score);
+
+  useEffect(() => {
+    currentScoreRef.current = score;
+  }, [score]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setUser(session.user);
+        setIsDemo(false);
+        fetchTraderData(session.access_token);
+      } else {
+        setIsDemo(true);
+        setUser(null);
+      }
     });
   }, []);
+
+  const fetchTraderData = async (token) => {
+    try {
+      const res = await fetch(`${API}/traders/score`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data?.data) {
+        setScore(data.data.currentScore || 0);
+        setTraderId(data.data.traderId);
+        connectSSE(token);
+        fetchTransactions(token);
+      }
+    } catch {
+      // Backend unavailable — stay on mock
+    }
+  };
+
+  const connectSSE = (token) => {
+    if (sseRef.current) sseRef.current.close();
+    const es = new EventSource(`${API}/traders/score/stream`);
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.currentScore !== undefined) {
+          setScore(data.currentScore);
+        }
+      } catch {}
+    };
+    es.onerror = () => es.close();
+    sseRef.current = es;
+  };
+
+  const fetchTransactions = async (token) => {
+    try {
+      const headers = token
+        ? { Authorization: `Bearer ${token}` }
+        : await getAuthHeader();
+      const res = await fetch(`${API}/traders/transactions`, { headers });
+      const data = await res.json();
+      if (data?.data?.transactions) {
+        const mapped = data.data.transactions.map((tx) => ({
+          id: tx.id,
+          sender: tx.senderAccount || "Unknown",
+          amount: tx.amount,
+          points: 0,
+          isRepeat: false,
+          timestamp: new Date(tx.timestamp),
+          status: "verified",
+        }));
+        setTransactions(mapped);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    return () => {
+      if (sseRef.current) sseRef.current.close();
+    };
+  }, []);
+
   const displayName =
     user?.user_metadata?.full_name || user?.email || "Mama Ngozi";
   const initials = displayName
@@ -56,9 +144,7 @@ export default function DashboardPage() {
     .slice(0, 2)
     .toUpperCase();
 
-  const tierInfo = getTier(score);
-
-  function generateTransaction() {
+  function generateMockTransaction() {
     const sender =
       MOCK_TRADERS[Math.floor(Math.random() * MOCK_TRADERS.length)];
     const isRepeat = seenSenders.current.has(sender.name);
@@ -93,21 +179,48 @@ export default function DashboardPage() {
     setLoanAccepted(false);
     seenSenders.current.clear();
 
-    try {
-      await fetch(SIMULATE_URL, { method: "POST" });
-    } catch {
-      // Backend not ready — using mock
+    if (traderId) {
+      try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${API}/debug/simulate-history`, {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ traderId }),
+        });
+        const data = await res.json();
+        if (data?.trader?.currentScore) {
+          const targetScore = data.trader.currentScore;
+          const currentScore = currentScoreRef.current;
+          const steps = 8;
+          const increment = Math.max(
+            Math.floor((targetScore - currentScore) / steps),
+            1,
+          );
+          for (let i = 0; i < steps; i++) {
+            await new Promise((r) => setTimeout(r, 400));
+            const tx = generateMockTransaction();
+            setTransactions((prev) => [tx, ...prev].slice(0, 20));
+            setScore((prev) =>
+              i === steps - 1
+                ? targetScore
+                : Math.min(prev + increment, targetScore),
+            );
+          }
+          setSimulating(false);
+          return;
+        }
+      } catch {}
     }
 
+    // Fall back to mock
     for (let i = 0; i < 8; i++) {
       await new Promise((r) => setTimeout(r, 400));
-      const tx = generateTransaction();
+      const tx = generateMockTransaction();
       setTransactions((prev) => [tx, ...prev].slice(0, 20));
       setScore((prev) => Math.min(1000, prev + tx.points));
     }
-
     setSimulating(false);
-  }, [simulating]);
+  }, [simulating, traderId]);
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -154,10 +267,10 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
           <div className="mb-8">
             <h1 className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-1">
-              Good morning, {displayName} 👋
+              Good morning, {displayName.split(" ")[0]} 👋
             </h1>
             <p className="font-['Inter'] text-sm text-[#8A6B70]">
-              Balogun Fabric Store · Squad Virtual Account Active
+              {isDemo ? "Demo Mode · " : ""}Squad Virtual Account Active
             </p>
           </div>
 
@@ -186,6 +299,7 @@ export default function DashboardPage() {
               tierLabel={tierInfo.label}
               accepted={loanAccepted}
               onAccept={() => setLoanAccepted(true)}
+              traderId={traderId}
             />
           )}
 
@@ -196,8 +310,8 @@ export default function DashboardPage() {
               simulating={simulating}
               transactions={transactions}
               userName={displayName}
+              onSimulate={simulate}
             />
-
             <TransactionFeed transactions={transactions} />
           </div>
         </div>

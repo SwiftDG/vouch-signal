@@ -1,22 +1,21 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { Unlock, CheckCircle, Rocket, Diamond } from "lucide-react";
+import { Unlock, CheckCircle, Rocket, Gem } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const TIER_LABELS = {
   2: {
-    emoji: <Unlock />,
-    title: "Microloan Unlocked!",
+    icon: <Unlock size={24} className="text-[#A84551]" />,
+    title: "Bronze Tier Unlocked!",
     desc: "Your consistency has earned you access to working capital.",
   },
   3: {
-    emoji: <Rocket />,
-    title: "Inventory Financing Unlocked!",
+    icon: <Rocket size={24} className="text-[#A84551]" />,
+    title: "Silver Tier Unlocked!",
     desc: "Scale your business with larger inventory credit.",
   },
   4: {
-    emoji: <Diamond />,
-    title: "Enterprise Credit Unlocked!",
+    icon: <Gem size={24} className="text-[#A84551]" />,
+    title: "Gold Tier Unlocked!",
     desc: "Maximum credit access. You've built something real.",
   },
 };
@@ -27,8 +26,8 @@ export default function LoanUnlock({
   tierLabel,
   accepted,
   onAccept,
+  traderId,
 }) {
-  const [loading, setLoading] = useState(false);
   const info = TIER_LABELS[tier] || TIER_LABELS[2];
   const navigate = useNavigate();
 
@@ -45,7 +44,6 @@ export default function LoanUnlock({
             : "bg-[#A84551]/5 border-[#A84551]/20"
         }`}
       >
-        {/* Animated background */}
         {!accepted && (
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-[#A84551]/5 to-transparent"
@@ -56,13 +54,13 @@ export default function LoanUnlock({
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <motion.span
-              className="text-3xl"
-              animate={accepted ? {} : { scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              {accepted ? <CheckCircle /> : info.emoji}
-            </motion.span>
+            <div className="w-12 h-12 bg-[#A84551]/10 rounded-full flex items-center justify-center flex-shrink-0">
+              {accepted ? (
+                <CheckCircle size={24} className="text-green-500" />
+              ) : (
+                info.icon
+              )}
+            </div>
             <div>
               <p className="font-['Bricolage_Grotesque'] font-bold text-lg text-[#1A0A0D]">
                 {accepted ? "Loan Disbursed Successfully!" : info.title}
@@ -89,7 +87,9 @@ export default function LoanUnlock({
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() =>
-                  navigate("/loan", { state: { limit, tier, tierLabel } })
+                  navigate("/loan", {
+                    state: { limit, tier, tierLabel, traderId },
+                  })
                 }
                 className="px-6 py-3 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer flex items-center gap-2"
               >

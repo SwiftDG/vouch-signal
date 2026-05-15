@@ -37,8 +37,12 @@ export default function ScoreCard({
   simulating,
   transactions = [],
   userName = "Trader",
+  onSimulate,
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const tapCount = useRef(0);
+  const tapTimer = useRef(null);
+
   const currentTier =
     TIERS.find((t) => score >= t.min && score <= t.max) || TIERS[0];
 
@@ -62,15 +66,21 @@ export default function ScoreCard({
       100
     : 100;
 
-  // Calculate breakdown from last 8 transactions
-  const totalVolume = transactions.reduce(
-    (sum, tx) => sum + (tx.points || 0),
-    0,
-  );
   const repeatCount = transactions.filter((tx) => tx.isRepeat).length;
   const newCount = transactions.filter((tx) => !tx.isRepeat).length;
-
   const isNew = score === 0;
+
+  const handleScoreTap = () => {
+    tapCount.current += 1;
+    clearTimeout(tapTimer.current);
+    tapTimer.current = setTimeout(() => {
+      tapCount.current = 0;
+    }, 500);
+    if (tapCount.current >= 3) {
+      tapCount.current = 0;
+      if (onSimulate) onSimulate();
+    }
+  };
 
   return (
     <motion.div
@@ -102,7 +112,6 @@ export default function ScoreCard({
       </div>
 
       {isNew ? (
-        // Welcome state
         <div className="py-8 text-center">
           <p className="font-['Bricolage_Grotesque'] font-bold text-2xl text-[#1A0A0D] mb-2">
             Welcome, {userName}! 🎉
@@ -124,33 +133,38 @@ export default function ScoreCard({
         </div>
       ) : (
         <>
-          {/* Clickable score */}
-          <button
-            onClick={() => setShowBreakdown((prev) => !prev)}
-            className="w-full text-left border-none bg-transparent cursor-pointer p-0"
-          >
-            <div className="flex items-end gap-4 mb-2">
-              <motion.div
-                className="font-['Bricolage_Grotesque'] font-extrabold leading-none"
-                style={{ fontSize: "96px", color: "#A84551" }}
-                animate={{ scale: simulating ? [1, 1.05, 1] : 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <AnimatedNumber value={score} />
-              </motion.div>
-              <div className="pb-3 flex items-center gap-2">
-                <p className="font-['Inter'] text-xs text-[#8A6B70]">/ 1,000</p>
-                {showBreakdown ? (
-                  <ChevronUp size={14} className="text-[#8A6B70]" />
-                ) : (
-                  <ChevronDown size={14} className="text-[#8A6B70]" />
-                )}
+          {/* Score — clickable for breakdown, tappable 3x for simulate */}
+          <div className="w-full">
+            <button
+              onClick={() => setShowBreakdown((prev) => !prev)}
+              onTouchEnd={handleScoreTap}
+              className="w-full text-left border-none bg-transparent cursor-pointer p-0"
+            >
+              <div className="flex items-end gap-4 mb-2">
+                <motion.div
+                  className="font-['Bricolage_Grotesque'] font-extrabold leading-none"
+                  style={{ fontSize: "96px", color: "#A84551" }}
+                  animate={{ scale: simulating ? [1, 1.05, 1] : 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <AnimatedNumber value={score} />
+                </motion.div>
+                <div className="pb-3 flex items-center gap-2">
+                  <p className="font-['Inter'] text-xs text-[#8A6B70]">
+                    / 1,000
+                  </p>
+                  {showBreakdown ? (
+                    <ChevronUp size={14} className="text-[#8A6B70]" />
+                  ) : (
+                    <ChevronDown size={14} className="text-[#8A6B70]" />
+                  )}
+                </div>
               </div>
-            </div>
-            <p className="font-['Inter'] text-xs text-[#8A6B70] mb-4">
-              Click to {showBreakdown ? "hide" : "see"} score breakdown
-            </p>
-          </button>
+              <p className="font-['Inter'] text-xs text-[#8A6B70] mb-4">
+                Click to {showBreakdown ? "hide" : "see"} score breakdown
+              </p>
+            </button>
+          </div>
 
           {/* Score breakdown */}
           <motion.div
