@@ -137,12 +137,12 @@ Before calling the engine, the backend must query the transaction history and pr
 - Jest (Crucial for testing the exact mathematical caps and edge cases).
 
 ## Verify when done
-- [ ] `calculateVariableA` properly zeros out if `unique_tx_this_month` is 9 or less.
-- [ ] `calculateVariableC` mathematically caps at exactly 250, even if there are 100 repeat senders.
-- [ ] Tier 1 users strictly receive 0 volume points, regardless of transaction sizes.
-- [ ] The `processSafetyBrakes` correctly shifts a user to `Repayment-Only` if their tier drops below their outstanding debt limit, without applying the -50 penalty.
-- [ ] B2B Fast-Track successfully reverts to organic scoring if the volume match is 69.9% or lower.
-- [ ] Unit tests cover penalty compounding (e.g., 2 months in default = -100 points).
+- [x] `calculateVariableA` properly zeros out if `unique_tx_this_month` is 9 or less.
+- [x] `calculateVariableC` mathematically caps at exactly 250, even if there are 100 repeat senders.
+- [x] Tier 1 users strictly receive 0 volume points, regardless of transaction sizes.
+- [x] The `processSafetyBrakes` correctly shifts a user to `Repayment-Only` if their tier drops below their outstanding debt limit, without applying the -50 penalty.
+- [x] B2B Fast-Track successfully reverts to organic scoring if the volume match is 69.9% or lower.
+- [x] Unit tests cover penalty compounding (e.g., 2 months in default = -100 points).
 
 ---
 
@@ -166,12 +166,12 @@ Extend the webhook controller to route `recurring.completed` and `recurring.fail
 - None (Uses Prisma `$queryRaw` for SQL)
 
 ## Verify when done
-- [ ] Rapid ping-pong transfers from the same sender trigger the CTE cycle detection and a score drop
-- [ ] Failed recurring Ajo payment logs a penalty in the ledger
-- [ ] No TypeScript errors
-- [ ] No console errors
-- [ ] API responds consistently via Postman/cURL
-- [ ] `npm run build` passes
+- [x] Rapid ping-pong transfers from the same sender trigger the CTE cycle detection and a score drop
+- [x] Failed recurring Ajo payment logs a penalty in the ledger
+- [x] No TypeScript errors
+- [x] No console errors
+- [x] API responds consistently via Postman/cURL
+- [x] `npm run build` passes
 
 ---
 
@@ -195,12 +195,12 @@ Implement `squad.service.ts` method to call the Squad Transfer API, utilizing th
 - None
 
 ## Verify when done
-- [ ] Hitting a score of 500 triggers the Transfer API service
-- [ ] Trader's `activeTier` updates in the database
-- [ ] No TypeScript errors
-- [ ] No console errors
-- [ ] API responds consistently via Postman/cURL
-- [ ] `npm run build` passes
+- [x] Hitting a score of 500 triggers the Transfer API service
+- [x] Trader's `activeTier` updates in the database
+- [x] No TypeScript errors
+- [x] No console errors
+- [x] API responds consistently via Postman/cURL
+- [x] `npm run build` passes
 
 ---
 
@@ -224,12 +224,12 @@ Map `GET /api/v1/lenders/score/:virtualAccount`. Return a structured JSON respon
 - None
 
 ## Verify when done
-- [ ] Request without valid API key returns 401 Unauthorized
-- [ ] Valid request returns structured Reputation Profile JSON
-- [ ] No TypeScript errors
-- [ ] No console errors
-- [ ] API responds consistently via Postman/cURL
-- [ ] `npm run build` passes
+- [x] Request without valid API key returns 401 Unauthorized
+- [x] Valid request returns structured Reputation Profile JSON
+- [x] No TypeScript errors
+- [x] No console errors
+- [x] API responds consistently via Postman/cURL
+- [x] `npm run build` passes
 
 ---
 
@@ -253,9 +253,9 @@ Write a loop that generates fake `charge.completed` webhook payloads and feeds t
 - None
 
 ## Verify when done
-- [ ] Hitting the endpoint with `count: 10` instantly generates 10 ledger entries
-- [ ] The trader's score visibly jumps in the database
-- [ ] Endpoint is clearly segregated from production routes
-- [ ] No TypeScript errors
-- [ ] No console errors
-- [ ] `npm run build` passes
+- [x] Hitting the endpoint with `count: 10` instantly generates 10 ledger entries
+- [x] The trader's score visibly jumps in the database
+- [x] Endpoint is clearly segregated from production routes
+- [x] No TypeScript errors
+- [x] No console errors
+- [x] `npm run build` passes

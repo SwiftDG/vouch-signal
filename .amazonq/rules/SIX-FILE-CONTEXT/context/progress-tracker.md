@@ -3,24 +3,27 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-- Unit 04: The Vouch Engine Integration — COMPLETE
+- Unit 08: Demo Trigger & Simulation Environment — COMPLETE
 
 ## Current Goal
-- Unit 04 implementation verification and testing
+- All core units implemented successfully
 
 ## Completed
 - Defined `project-overview.md`, `architecture.md`, `code-standards.md`, `ai-workflow-rules.md`.
 - ✅ **Unit 01 — COMPLETE**: `package.json`, `tsconfig.json` (strict mode), `prisma/schema.prisma` (all 7 models + enums), `src/config/env.ts` (typed env validation), `src/routes/health.route.ts`, `src/server.ts`. Prisma client generated. `npm run build` passes with zero TypeScript errors. Pushed to `main` on GitHub.
 - ✅ **Unit 02 — COMPLETE**: `src/middlewares/auth.middleware.ts` (Supabase JWT), `src/utils/crypto.util.ts` (AES-256-GCM BVN encryption), `src/services/squad.service.ts` (virtual account creation), `src/controllers/trader.controller.ts`, `src/routes/trader.route.ts`. `POST /api/v1/traders/onboard` mounted. Zero TypeScript errors. Pushed to `feat/02-identity-onboarding` on GitHub.
-- ✅ **Unit 03 — COMPLETE**: `src/middlewares/webhook.middleware.ts` (HMAC SHA-512 v3 format with 6-field pipe-separated hash), `src/controllers/webhook.controller.ts` (idempotency + async handoff), `src/routes/webhook.route.ts`. `POST /api/v1/webhooks/squad` mounted. Successfully tested with Squad v3 webhook format. Zero TypeScript errors.
-- ✅ **Unit 04 — COMPLETE**: `src/engine/vouch.engine.ts` (full VouchEngine with Variables A-D, tier evaluation, safety brakes, B2B fast-track), `src/services/transaction.service.ts` (buildUserData aggregation + VouchEngine integration), `prisma/schema.prisma` (added activeTier as Int, previousTier, creditLimit, outstandingBalance to Trader model). Zero TypeScript errors. All mathematical boundaries and edge cases implemented according to specification.
-- ✅ **Unit 05 — COMPLETE**: `src/engine/fraud.detector.ts` (Recursive CTE 4-hop cycle detection, -150 penalty), `src/services/ajo.service.ts` (recurring.completed +40 / recurring.failed -60), webhook controller extended, fraud check wired into transaction service. Zero TypeScript errors.
+- ✅ **Unit 03 — COMPLETE**: `src/middlewares/webhook.middleware.ts` (HMAC SHA-512 correct format with JSON.stringify(body)), `src/controllers/webhook.controller.ts` (idempotency + async handoff), `src/routes/webhook.route.ts`. `POST /api/v1/webhooks/squad` mounted. Successfully tested with Squad webhook format. Zero TypeScript errors.
+- ✅ **Unit 04 — COMPLETE**: `src/engine/vouch.engine.ts` (full VouchEngine with Variables A-D, tier evaluation, safety brakes, B2B fast-track), `src/services/transaction.service.ts` (buildUserData aggregation + VouchEngine integration), `prisma/schema.prisma` (added activeTier as Int, previousTier, creditLimit, outstandingBalance to Trader model). Zero TypeScript errors. All mathematical boundaries and edge cases implemented according to specification. Successfully tested with real Squad webhooks.
+- ✅ **Unit 05 — COMPLETE**: `src/engine/fraud.detector.ts` (Recursive CTE 4-hop cycle detection, -150 penalty), `src/services/ajo.service.ts` (recurring.completed +40 / recurring.failed -60), webhook controller extended, fraud check wired into transaction service. Zero TypeScript errors. Integrated with Unit 04 scoring pipeline.
+- ✅ **Unit 06 — COMPLETE**: Tier evaluation post-score hook and Squad Transfer API disbursement. `evaluateTierUnlock()` function triggers ₦50,000 loan disbursement when score crosses 400 (Tier 2 threshold). `disburseLoan()` function calls Squad Transfer API. Successfully tested with webhook simulation.
+- ✅ **Unit 07 — COMPLETE**: `src/middlewares/api-key.middleware.ts` (Partner API key validation), `src/controllers/lender.controller.ts`, `src/routes/lender.route.ts`. `GET /api/v1/lenders/score/:virtualAccount` mounted. Secure B2B API endpoint for external partners to query trader scores. Zero TypeScript errors.
+- ✅ **Unit 08 — COMPLETE**: `src/controllers/debug.controller.ts`, `src/routes/debug/debug.route.ts`. `POST /api/v1/debug/simulate-payments` mounted. God Mode simulation endpoint that generates fake transactions and feeds them directly into the scoring engine. Environment-restricted to development/demo only. Zero TypeScript errors.
 
 ## In Progress
-- None
+- None - All units complete
 
 ## Next Up
-- **Unit 06**: Tier evaluation post-score hook, Squad Transfer API disbursement.
+- **Unit 08**: Demo Trigger & Simulation Environment
 
 ## Open Questions
 - What specific metrics (e.g., exact weighting of transaction consistency vs. Ajo defaults) will the AI Scoring Engine use, or should that be stubbed initially?
