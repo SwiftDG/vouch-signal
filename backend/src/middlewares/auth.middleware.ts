@@ -39,21 +39,7 @@ export const requireSupabaseAuth = (req: Request, res: Response, next: NextFunct
 
   const token = authHeader.split(' ')[1];
 
-  // Development bypass for testing
-  if (config.nodeEnv === 'development') {
-    try {
-      const decoded = jwt.decode(token) as jwt.JwtPayload;
-      if (decoded?.sub) {
-        console.log('✅ Development mode: JWT accepted for user:', decoded.email || decoded.sub);
-        req.user = { id: decoded.sub };
-        return next();
-      }
-    } catch (err) {
-      // Fall through to normal verification
-    }
-  }
-
-  // 3. Verify using the Asymmetric Public Key fetched from Supabase
+  // Verify using the Asymmetric Public Key fetched from Supabase
   // We allow both RS256 and ES256 to cover all modern Supabase defaults
   jwt.verify(
     token,
