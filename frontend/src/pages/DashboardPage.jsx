@@ -267,7 +267,7 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
           <div className="mb-8">
             <h1 className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-1">
-              Good morning, {displayName.split(" ")[0]} 👋
+              Good morning, {displayName} 👋
             </h1>
             <p className="font-['Inter'] text-sm text-[#8A6B70]">
               {isDemo ? "Demo Mode · " : ""}Squad Virtual Account Active
