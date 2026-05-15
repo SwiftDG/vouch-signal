@@ -22,13 +22,8 @@ export function verifySquadSignature(
     .toUpperCase();
 
   if (hash !== signature) {
-    console.log('❌ Signature mismatch:');
-    console.log('Expected:', hash);
-    console.log('Received:', signature);
     res.status(401).json({ data: null, error: 'Invalid webhook signature' });
     return;
   }
-
-  console.log('✅ Webhook signature verified');
   next();
 }

@@ -16,6 +16,8 @@ const app = express();
 // Security headers
 app.use(helmet());
 
+app.set('trust proxy', 1);
+
 // CORS configuration
 const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173']; // Common React/Vite ports
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
