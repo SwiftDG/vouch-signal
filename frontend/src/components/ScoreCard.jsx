@@ -25,28 +25,10 @@ function AnimatedNumber({ value }) {
 }
 
 const TIERS = [
-  { min: 0, max: 399, label: "Thin File", color: "#8A6B70", limit: "₦0" },
-  {
-    min: 400,
-    max: 599,
-    label: "Microloan",
-    color: "#E8A838",
-    limit: "₦50,000",
-  },
-  {
-    min: 600,
-    max: 799,
-    label: "Inventory",
-    color: "#4A90D9",
-    limit: "₦150,000",
-  },
-  {
-    min: 800,
-    max: 1000,
-    label: "Enterprise",
-    color: "#A84551",
-    limit: "₦500,000",
-  },
+  { min: 0, max: 399, label: "Probation", color: "#8A6B70", limit: "₦0" },
+  { min: 400, max: 599, label: "Bronze", color: "#E8A838", limit: "₦50,000" },
+  { min: 600, max: 799, label: "Silver", color: "#4A90D9", limit: "₦150,000" },
+  { min: 800, max: 1000, label: "Gold", color: "#A84551", limit: "₦500,000" },
 ];
 
 export default function ScoreCard({
@@ -54,6 +36,7 @@ export default function ScoreCard({
   tier,
   simulating,
   transactions = [],
+  userName = "Trader",
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const currentTier =
@@ -104,7 +87,7 @@ export default function ScoreCard({
             Market Reputation Score
           </p>
           <p className="font-['Inter'] text-sm font-semibold text-[#1A0A0D]">
-            Mama Ngozi · Balogun Fabric Store
+            {userName} · Balogun Fabric Store
           </p>
         </div>
         <div
@@ -122,7 +105,7 @@ export default function ScoreCard({
         // Welcome state
         <div className="py-8 text-center">
           <p className="font-['Bricolage_Grotesque'] font-bold text-2xl text-[#1A0A0D] mb-2">
-            Welcome, Mama Ngozi! 🎉
+            Welcome, {userName}! 🎉
           </p>
           <p className="font-['Inter'] text-sm text-[#8A6B70] max-w-xs mx-auto leading-relaxed">
             Your Market Reputation Score starts building the moment your first

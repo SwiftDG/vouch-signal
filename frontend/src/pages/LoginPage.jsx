@@ -1,41 +1,16 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-function AnimatedBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden">
-      <motion.div
-        className="absolute inset-0"
-        animate={{
-          background: [
-            "linear-gradient(135deg, #ffffff 0%, #ffffff 45%, rgba(168,69,81,0.15) 65%, rgba(196,96,110,0.25) 80%, rgba(255,182,193,0.3) 100%)",
-            "linear-gradient(135deg, #ffffff 0%, #ffffff 40%, rgba(196,96,110,0.2) 60%, rgba(168,69,81,0.3) 75%, rgba(255,150,170,0.25) 100%)",
-            "linear-gradient(135deg, #ffffff 0%, #ffffff 50%, rgba(168,69,81,0.12) 68%, rgba(220,100,120,0.28) 85%, rgba(255,182,193,0.2) 100%)",
-            "linear-gradient(135deg, #ffffff 0%, #ffffff 45%, rgba(168,69,81,0.15) 65%, rgba(196,96,110,0.25) 80%, rgba(255,182,193,0.3) 100%)",
-          ],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-    </div>
-  );
-}
-
-const container = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.15 } },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-};
+import AnimatedBackground from "../components/AnimatedBackground";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const handleGoogleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -48,11 +23,30 @@ export default function LoginPage() {
     });
   };
 
+  const handleSignIn = async () => {
+    setError("");
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+    setLoading(true);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
+    navigate("/dashboard");
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
       <AnimatedBackground />
 
-      {/* Background blobs */}
       <motion.div
         className="absolute w-96 h-96 rounded-full"
         style={{
@@ -90,7 +84,6 @@ export default function LoginPage() {
       />
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,7 +98,6 @@ export default function LoginPage() {
           </p>
         </motion.div>
 
-        {/* Card */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -116,10 +108,15 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="font-['Inter'] text-sm text-[#8A6B70] mb-8">
-            Sign in to your Vouch Signal account
+            Sign in to your Vouch account
           </p>
 
-          {/* Email input */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 font-['Inter'] text-xs p-3 mb-4">
+              {error}
+            </div>
+          )}
+
           <div className="mb-4">
             <label className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] block mb-2">
               Email
@@ -127,11 +124,12 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="trader@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-[#E8DDE0] px-4 py-3 font-['Inter'] text-sm text-[#1A0A0D] outline-none focus:border-[#A84551] transition-colors bg-white"
             />
           </div>
 
-          {/* Password input */}
           <div className="mb-6">
             <label className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] block mb-2">
               Password
@@ -139,24 +137,27 @@ export default function LoginPage() {
             <input
               type="password"
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-[#E8DDE0] px-4 py-3 font-['Inter'] text-sm text-[#1A0A0D] outline-none focus:border-[#A84551] transition-colors bg-white"
             />
           </div>
 
-          {/* Sign in button */}
           <motion.button
             whileHover={{ scale: 1.02, backgroundColor: "#8B3541" }}
             whileTap={{ scale: 0.98 }}
-            className="w-full py-4 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer transition-colors mb-4"
+            onClick={handleSignIn}
+            disabled={loading}
+            className="w-full py-4 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer transition-colors mb-4 disabled:opacity-50"
           >
-            Sign In
+            {loading ? "Signing in..." : "Sign In"}
           </motion.button>
 
           <motion.button
             onClick={handleGoogleSignIn}
             whileHover={{ scale: 1.02, borderColor: "#A84551" }}
             whileTap={{ scale: 0.98 }}
-            className="w-full py-4 bg-white text-[#1A0A0D] font-['Inter'] font-semibold text-sm border border-[#E8DDE0] cursor-pointer transition-colors flex items-center justify-center gap-3"
+            className="w-full py-4 bg-white text-[#1A0A0D] font-['Inter'] font-semibold text-sm border border-[#E8DDE0] cursor-pointer transition-colors flex items-center justify-center gap-3 mb-4"
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path
@@ -179,14 +180,12 @@ export default function LoginPage() {
             Sign in with Google
           </motion.button>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 mb-4">
             <div className="flex-1 h-px bg-[#E8DDE0]" />
             <span className="font-['Inter'] text-xs text-[#8A6B70]">or</span>
             <div className="flex-1 h-px bg-[#E8DDE0]" />
           </div>
 
-          {/* Demo bypass — the real button */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -209,7 +208,6 @@ export default function LoginPage() {
           </p>
         </motion.div>
 
-        {/* Back to home */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

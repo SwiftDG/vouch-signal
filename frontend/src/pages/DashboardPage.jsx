@@ -8,7 +8,8 @@ import TransactionFeed from "../components/TransactionFeed";
 import LoanUnlock from "../components/LoanUnlock";
 import AnimatedBackground from "../components/AnimatedBackground";
 
-const SIMULATE_URL = "http://localhost:3000/api/v1/simulate";
+const SIMULATE_URL =
+  "https://vouch-w5z1.onrender.com/api/v1/debug/simulate-history";
 
 const MOCK_TRADERS = [
   { name: "Chidi Okafor", amount: 3500 },
@@ -23,12 +24,12 @@ const MOCK_TRADERS = [
 
 function getTier(score) {
   if (score >= 800)
-    return { tier: 4, label: "Enterprise", limit: 500000, next: null };
+    return { tier: 4, label: "Gold", limit: 500000, next: null };
   if (score >= 600)
-    return { tier: 3, label: "Inventory", limit: 150000, next: 800 };
+    return { tier: 3, label: "Silver", limit: 150000, next: 800 };
   if (score >= 400)
-    return { tier: 2, label: "Microloan", limit: 50000, next: 600 };
-  return { tier: 1, label: "Thin File", limit: 0, next: 400 };
+    return { tier: 2, label: "Bronze", limit: 50000, next: 600 };
+  return { tier: 1, label: "Probation", limit: 0, next: 400 };
 }
 
 export default function DashboardPage() {
@@ -153,7 +154,7 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
           <div className="mb-8">
             <h1 className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-1">
-              Good morning, Mama Ngozi 👋
+              Good morning, {displayName} 👋
             </h1>
             <p className="font-['Inter'] text-sm text-[#8A6B70]">
               Balogun Fabric Store · Squad Virtual Account Active

@@ -1,8 +1,21 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { supabase } from "../lib/supabase";
 
 export default function SignupPage() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    fullName: "",
+    businessName: "",
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+
   const handleGoogleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -14,10 +27,37 @@ export default function SignupPage() {
       },
     });
   };
+
+  const handleSignUp = async () => {
+    setError("");
+    if (!form.email || !form.password || !form.fullName || !form.businessName) {
+      setError("Please fill in all fields");
+      return;
+    }
+    setLoading(true);
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        data: {
+          full_name: form.fullName,
+          business_name: form.businessName,
+        },
+      },
+    });
+    if (signUpError) {
+      setError(signUpError.message);
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
+    setConfirmed(true);
+    setLoading(false);
+  };
+
   return (
     <div className="relative min-h-screen bg-white flex flex-col items-center justify-center px-6">
       <AnimatedBackground />
-
       <div className="relative z-10 w-full max-w-md">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -36,6 +76,16 @@ export default function SignupPage() {
           </p>
         </motion.div>
 
+        {confirmed && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-green-50 border border-green-200 text-green-700 font-['Inter'] text-sm p-4 mb-4 text-center"
+          >
+            Account created! Check your email to confirm before signing in.
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -49,6 +99,12 @@ export default function SignupPage() {
             Start building your Market Reputation Score today
           </p>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 font-['Inter'] text-xs p-3 mb-4">
+              {error}
+            </div>
+          )}
+
           <div className="mb-4">
             <label className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] block mb-2">
               Full Name
@@ -56,6 +112,8 @@ export default function SignupPage() {
             <input
               type="text"
               placeholder="Mama Ngozi"
+              value={form.fullName}
+              onChange={(e) => setForm({ ...form, fullName: e.target.value })}
               className="w-full border border-[#E8DDE0] px-4 py-3 font-['Inter'] text-sm text-[#1A0A0D] outline-none focus:border-[#A84551] transition-colors bg-white"
             />
           </div>
@@ -67,6 +125,10 @@ export default function SignupPage() {
             <input
               type="text"
               placeholder="Balogun Fabric Store"
+              value={form.businessName}
+              onChange={(e) =>
+                setForm({ ...form, businessName: e.target.value })
+              }
               className="w-full border border-[#E8DDE0] px-4 py-3 font-['Inter'] text-sm text-[#1A0A0D] outline-none focus:border-[#A84551] transition-colors bg-white"
             />
           </div>
@@ -78,6 +140,8 @@ export default function SignupPage() {
             <input
               type="email"
               placeholder="trader@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="w-full border border-[#E8DDE0] px-4 py-3 font-['Inter'] text-sm text-[#1A0A0D] outline-none focus:border-[#A84551] transition-colors bg-white"
             />
           </div>
@@ -89,6 +153,8 @@ export default function SignupPage() {
             <input
               type="password"
               placeholder="••••••••"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="w-full border border-[#E8DDE0] px-4 py-3 font-['Inter'] text-sm text-[#1A0A0D] outline-none focus:border-[#A84551] transition-colors bg-white"
             />
           </div>
@@ -96,9 +162,11 @@ export default function SignupPage() {
           <motion.button
             whileHover={{ scale: 1.02, backgroundColor: "#8B3541" }}
             whileTap={{ scale: 0.98 }}
-            className="w-full py-4 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer transition-colors mb-4"
+            onClick={handleSignUp}
+            disabled={loading}
+            className="w-full py-4 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer transition-colors mb-4 disabled:opacity-50"
           >
-            Create Account →
+            {loading ? "Creating Account..." : "Create Account →"}
           </motion.button>
 
           <div className="flex items-center gap-4 mb-4">
@@ -146,7 +214,7 @@ export default function SignupPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-center mt-6"
+          className="text-center mt-6 mb-6"
         >
           <a
             href="/"

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Unlock, CheckCircle, Rocket, Diamond } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const TIER_LABELS = {
   2: {
@@ -29,14 +30,7 @@ export default function LoanUnlock({
 }) {
   const [loading, setLoading] = useState(false);
   const info = TIER_LABELS[tier] || TIER_LABELS[2];
-
-  const handleAccept = async () => {
-    setLoading(true);
-    // Will call Transfer API when Emmanuel ships endpoint
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    onAccept();
-  };
+  const navigate = useNavigate();
 
   return (
     <AnimatePresence>
@@ -94,26 +88,12 @@ export default function LoanUnlock({
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={handleAccept}
-                disabled={loading}
-                className="px-6 py-3 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                onClick={() =>
+                  navigate("/loan", { state: { limit, tier, tierLabel } })
+                }
+                className="px-6 py-3 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer flex items-center gap-2"
               >
-                {loading ? (
-                  <>
-                    <motion.div
-                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 0.8,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                    Disbursing...
-                  </>
-                ) : (
-                  "Accept Loan →"
-                )}
+                Get a Loan →
               </motion.button>
             </div>
           )}
