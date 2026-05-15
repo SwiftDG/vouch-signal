@@ -4,24 +4,24 @@
   "description": "AI-powered financial reputation scoring system",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx prisma generate && tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn src/server.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
     "@supabase/supabase-js": "^2.105.4",
-    "axios": "^1.16.0",
-    "dotenv": "^17.4.2",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.3"
-  },
-  "devDependencies": {
     "@types/express": "^4.17.25",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.41",
+    "axios": "^1.16.0",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
     "prisma": "^5.14.0",
-    "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "ts-node-dev": "^2.0.0"
   }
 }
