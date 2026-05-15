@@ -6,6 +6,7 @@ import traderRouter from './routes/trader.route';
 import webhookRouter from './routes/webhook.route';
 import lenderRouter from './routes/lender.route';
 import debugRouter from './routes/debug/debug.route';
+import loanRouter from './routes/loan.route';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/v1', healthRouter);
 app.use('/api/v1/traders', traderRouter);
 app.use('/api/v1/lenders', lenderRouter);
 app.use('/api/v1/debug', debugRouter);
+app.use('/api/v1/loans', loanRouter);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction): void => {
   console.error(err.message);

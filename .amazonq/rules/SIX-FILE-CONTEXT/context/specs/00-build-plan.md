@@ -259,3 +259,38 @@ Write a loop that generates fake `charge.completed` webhook payloads and feeds t
 - [x] No TypeScript errors
 - [x] No console errors
 - [x] `npm run build` passes
+
+# Unit 09: Frontend Integration & Real-Time Sync
+
+## Goal
+Provide the necessary API endpoints for the client-side application to retrieve user state, process secure onboarding, execute loan disbursements, and maintain live synchronization with the Vouch Engine.
+
+## Design
+RESTful API architecture combined with Server-Sent Events (SSE) for lightweight real-time data pushing. The transaction history relies strictly on local database aggregations rather than external network requests to ensure sub-second response times and prevent Squad API rate-limiting.
+
+## Implementation
+
+### 1. Identity & Virtual Account Provisioning
+Create `POST /api/v1/traders/onboard` in the trader controller. Extract user payload, encrypt the BVN, call the `squadService` to provision a Virtual Account, and initialize the trader in the PostgreSQL database at Tier 1 with a 0 score.
+
+### 2. State & History Retrieval
+Create two lightweight endpoints for the initial dashboard load:
+- `GET /api/v1/traders/score`: Returns the current score, active tier, credit limit, and outstanding balance.
+- `GET /api/v1/traders/transactions`: Returns the 50 most recent local webhooks/transactions linked to the trader, ordered by newest first.
+
+### 3. Loan Disbursement Trigger
+Create `POST /api/v1/loans/accept` in a new `loan.controller.ts`. Verify the requested amount against the trader's (`creditLimit` - `outstandingBalance`). If valid, trigger the `squadService.initiateTransfer()` method to disburse real funds and increment the database debt.
+
+### 4. Real-Time Engine (SSE)
+Create `GET /api/v1/traders/score/stream`. Establish a Server-Sent Events (SSE) connection by setting `text/event-stream` headers. Implement a 5-second polling interval to query the database and push updated score and tier data directly to the React frontend. Include a cleanup event listener for when the client drops the connection.
+
+## Dependencies
+- Native `EventSource` API (Frontend)
+- Squad API Transfer endpoints
+
+## Verify when done
+- [ ] `POST /onboard` successfully encrypts BVN and returns a Squad Virtual Account.
+- [ ] `GET /score` correctly returns the isolated profile of the authenticated user.
+- [ ] `GET /transactions` returns data sourced from the local DB, not the Squad API.
+- [ ] `POST /loans/accept` strictly rejects amounts higher than the available credit limit.
+- [ ] `GET /score/stream` successfully pushes data to the browser network tab without timing out.

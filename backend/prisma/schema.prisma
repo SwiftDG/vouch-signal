@@ -10,6 +10,7 @@ datasource db {
 
 model Trader {
   id                   String         @id @default(cuid())
+  supabaseUserId       String?        @unique
   phoneNumber          String         @unique
   businessName         String
   squadVirtualAccount  String         @unique

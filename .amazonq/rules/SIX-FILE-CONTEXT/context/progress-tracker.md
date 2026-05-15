@@ -3,7 +3,7 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-- Unit 08: Demo Trigger & Simulation Environment — COMPLETE
+- Unit 09: Frontend Integration & Real-Time Sync — COMPLETE
 
 ## Current Goal
 - All core units implemented successfully
@@ -18,6 +18,7 @@ Update this file after every meaningful implementation change.
 - ✅ **Unit 06 — COMPLETE**: Tier evaluation post-score hook and Squad Transfer API disbursement. `evaluateTierUnlock()` function triggers ₦50,000 loan disbursement when score crosses 400 (Tier 2 threshold). `disburseLoan()` function calls Squad Transfer API. Successfully tested with webhook simulation.
 - ✅ **Unit 07 — COMPLETE**: `src/middlewares/api-key.middleware.ts` (Partner API key validation), `src/controllers/lender.controller.ts`, `src/routes/lender.route.ts`. `GET /api/v1/lenders/score/:virtualAccount` mounted. Secure B2B API endpoint for external partners to query trader scores. Zero TypeScript errors.
 - ✅ **Unit 08 — COMPLETE**: `src/controllers/debug.controller.ts`, `src/routes/debug/debug.route.ts`. `POST /api/v1/debug/simulate-payments` mounted. God Mode simulation endpoint that generates fake transactions and feeds them directly into the scoring engine. Environment-restricted to development/demo only. Zero TypeScript errors.
+- ✅ **Unit 09 — COMPLETE**: `src/controllers/trader.controller.ts` (getTraderScore, getTraderTransactions, streamTraderScore with user isolation via supabaseUserId), `src/controllers/loan.controller.ts` (acceptLoan with user isolation), `src/routes/loan.route.ts`. `GET /api/v1/traders/score`, `GET /api/v1/traders/transactions`, `GET /api/v1/traders/score/stream` (SSE), `POST /api/v1/loans/accept` mounted. Complete frontend integration API with real-time sync and proper user isolation. Added `supabaseUserId` field to Trader model for one-to-one user-trader relationship. Zero TypeScript errors.
 
 ## In Progress
 - None - All units complete

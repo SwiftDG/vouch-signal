@@ -122,6 +122,93 @@ POST /debug/simulate-history
 ```
 **Note:** This endpoint generates 30 days of perfectly crafted transaction history (93 transactions totaling ₦225,000) designed to maximize VouchEngine variables and instantly elevate a trader to Tier 3. Only available in development mode.
 
+### 5. Trader Score Query
+```
+GET /traders/score
+Headers: Authorization: Bearer <jwt_token>
+```
+**Response:**
+```json
+{
+  "data": {
+    "traderId": "cmp5qqb0x0000x1kyvrvgvs9a",
+    "businessName": "Demo Fashion Store",
+    "virtualAccount": "9012345678",
+    "currentScore": 750,
+    "activeTier": 3,
+    "creditLimit": 150000,
+    "outstandingBalance": 0,
+    "lastUpdated": "2026-05-15T12:00:00.000Z"
+  },
+  "error": null
+}
+```
+
+### 6. Transaction History
+```
+GET /traders/transactions
+Headers: Authorization: Bearer <jwt_token>
+```
+**Response:**
+```json
+{
+  "data": {
+    "traderId": "cmp5qqb0x0000x1kyvrvgvs9a",
+    "transactions": [
+      {
+        "id": "tx_001",
+        "amount": 2500,
+        "senderAccount": "0123456789",
+        "squadReference": "SIM_SQ_abc123",
+        "transactionType": "INBOUND",
+        "timestamp": "2026-05-15T11:30:00.000Z"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+### 7. Loan Acceptance
+```
+POST /loans/accept
+Headers: Authorization: Bearer <jwt_token>
+```
+**Request:**
+```json
+{
+  "amount": 25000,
+  "traderId": "cmp5qqb0x0000x1kyvrvgvs9a"
+}
+```
+**Response:**
+```json
+{
+  "data": {
+    "traderId": "cmp5qqb0x0000x1kyvrvgvs9a",
+    "loanAmount": 25000,
+    "transactionReference": "LOAN_1778729253_x1kyvrvg",
+    "newOutstandingBalance": 25000,
+    "availableCreditRemaining": 125000,
+    "disbursementStatus": "completed"
+  },
+  "error": null
+}
+```
+
+### 8. Real-Time Score Stream (SSE)
+```
+GET /traders/score/stream
+Headers: Authorization: Bearer <jwt_token>
+```
+**Response (Server-Sent Events):**
+```
+data: {"currentScore":750,"activeTier":3,"creditLimit":150000,"outstandingBalance":25000,"lastUpdated":"2026-05-15T12:05:00.000Z","timestamp":"2026-05-15T12:05:00.000Z"}
+
+data: {"currentScore":755,"activeTier":3,"creditLimit":150000,"outstandingBalance":25000,"lastUpdated":"2026-05-15T12:05:05.000Z","timestamp":"2026-05-15T12:05:05.000Z"}
+```
+**Note:** Updates every 5 seconds with current trader state
+
 ---
 
 ## Data Models
@@ -218,6 +305,30 @@ interface ScoreLedgerEntry {
   scoreChange: number;
   newTotalScore: number;
   reason: string;
+  timestamp: string; // ISO date
+}
+```
+
+### Loan Acceptance Response
+```typescript
+interface LoanAcceptanceResponse {
+  traderId: string;
+  loanAmount: number;
+  transactionReference: string;
+  newOutstandingBalance: number;
+  availableCreditRemaining: number;
+  disbursementStatus: 'completed' | 'failed';
+}
+```
+
+### Real-Time Score Update (SSE)
+```typescript
+interface ScoreStreamData {
+  currentScore: number;
+  activeTier: number;
+  creditLimit: number;
+  outstandingBalance: number;
+  lastUpdated: string; // ISO date
   timestamp: string; // ISO date
 }
 ```
@@ -408,4 +519,210 @@ VITE_DEBUG_MODE=false
 ]
 ```
 
-This documentation provides everything needed to build a complete frontend interface for the Vouch Signal platform.
+## Unit 09 Testing Instructions
+
+### Prerequisites
+1. **Server Running**: `npm run dev` in backend directory
+2. **Fresh JWT Token**: Run `node get-fresh-token.mjs` or use development bypass
+3. **Trader Created**: Use Unit 02 onboarding to get a `traderId`
+4. **Demo Data**: Run Unit 08 simulation to populate trader with Tier 3 status
+
+### Test Sequence
+
+#### **Step 1: Create & Elevate Trader**
+```bash
+# 1. Create trader (Unit 02)
+POST http://localhost:3000/api/v1/traders/onboard
+Headers: Authorization: Bearer JWT_TOKEN
+Body: { trader onboarding data }
+# → Get traderId from response
+
+# 2. Elevate to Tier 3 (Unit 08)
+POST http://localhost:3000/api/v1/debug/simulate-history
+Body: { "traderId": "your-trader-id" }
+# → Trader now has 750+ score, Tier 3, ₦150K limit
+```
+
+#### **Step 2: Test Score Query**
+```bash
+GET http://localhost:3000/api/v1/traders/score
+Headers: Authorization: Bearer JWT_TOKEN
+```
+**Expected Response:**
+```json
+{
+  "data": {
+    "currentScore": 750,
+    "activeTier": 3,
+    "creditLimit": 150000,
+    "outstandingBalance": 0
+  }
+}
+```
+
+#### **Step 3: Test Transaction History**
+```bash
+GET http://localhost:3000/api/v1/traders/transactions
+Headers: Authorization: Bearer JWT_TOKEN
+```
+**Expected Response:**
+```json
+{
+  "data": {
+    "transactions": [
+      {
+        "amount": 2500,
+        "transactionType": "INBOUND",
+        "timestamp": "2026-05-15T..."
+      }
+    ]
+  }
+}
+```
+**Should show 93 transactions from simulation**
+
+#### **Step 4: Test Loan Acceptance**
+```bash
+POST http://localhost:3000/api/v1/loans/accept
+Headers: Authorization: Bearer JWT_TOKEN
+Body: {
+  "amount": 25000,
+  "traderId": "your-trader-id"
+}
+```
+**Expected Response:**
+```json
+{
+  "data": {
+    "loanAmount": 25000,
+    "newOutstandingBalance": 25000,
+    "availableCreditRemaining": 125000,
+    "disbursementStatus": "completed"
+  }
+}
+```
+
+#### **Step 5: Test Credit Limit Validation**
+```bash
+POST http://localhost:3000/api/v1/loans/accept
+Headers: Authorization: Bearer JWT_TOKEN
+Body: {
+  "amount": 200000,
+  "traderId": "your-trader-id"
+}
+```
+**Expected Response:** `400 Bad Request`
+```json
+{
+  "data": null,
+  "error": "Loan amount ₦200,000 exceeds available credit limit of ₦125,000"
+}
+```
+
+#### **Step 6: Test Real-Time Stream (SSE)**
+
+**Option A: Browser Test**
+1. Open browser to: `http://localhost:3000/api/v1/traders/score/stream`
+2. Add Authorization header (use browser dev tools or extension)
+3. Should see continuous data stream every 5 seconds
+
+**Option B: Postman Test**
+1. **Method:** `GET`
+2. **URL:** `http://localhost:3000/api/v1/traders/score/stream`
+3. **Headers:** `Authorization: Bearer JWT_TOKEN`
+4. **Send** → Should see streaming responses
+
+**Option C: cURL Test**
+```bash
+curl -H "Authorization: Bearer JWT_TOKEN" \
+     -H "Accept: text/event-stream" \
+     http://localhost:3000/api/v1/traders/score/stream
+```
+
+**Expected SSE Output:**
+```
+data: {"currentScore":750,"activeTier":3,"creditLimit":150000,"outstandingBalance":25000,"timestamp":"2026-05-15T12:05:00.000Z"}
+
+data: {"currentScore":750,"activeTier":3,"creditLimit":150000,"outstandingBalance":25000,"timestamp":"2026-05-15T12:05:05.000Z"}
+```
+
+### **Error Cases to Test**
+
+#### **Authentication Errors**
+```bash
+# Missing JWT token
+GET http://localhost:3000/api/v1/traders/score
+# Expected: 401 Unauthorized
+
+# Invalid JWT token
+GET http://localhost:3000/api/v1/traders/score
+Headers: Authorization: Bearer invalid_token
+# Expected: 401 Unauthorized
+```
+
+#### **Loan Validation Errors**
+```bash
+# Negative amount
+POST http://localhost:3000/api/v1/loans/accept
+Body: { "amount": -1000 }
+# Expected: 400 Bad Request
+
+# Amount too small
+POST http://localhost:3000/api/v1/loans/accept
+Body: { "amount": 500 }
+# Expected: 400 Bad Request (minimum ₦1,000)
+
+# Missing amount
+POST http://localhost:3000/api/v1/loans/accept
+Body: { "traderId": "..." }
+# Expected: 400 Bad Request
+```
+
+### **Integration Test Flow**
+
+**Complete End-to-End Test:**
+1. ✅ Create trader (Unit 02)
+2. ✅ Simulate 30-day history (Unit 08)
+3. ✅ Query elevated score (Unit 09)
+4. ✅ View transaction history (Unit 09)
+5. ✅ Accept loan within limit (Unit 09)
+6. ✅ Verify updated balance (Unit 09)
+7. ✅ Test real-time stream (Unit 09)
+8. ✅ Attempt over-limit loan (Unit 09)
+
+### **Production Testing**
+
+For your deployed Render app (`https://vouch-w5z1.onrender.com`):
+
+```bash
+# Replace localhost with your Render URL
+GET https://vouch-w5z1.onrender.com/api/v1/traders/score
+Headers: Authorization: Bearer JWT_TOKEN
+
+# Note: Debug endpoints will be blocked in production
+POST https://vouch-w5z1.onrender.com/api/v1/debug/simulate-history
+# Expected: 403 Forbidden (production safety)
+```
+
+### **Frontend Integration Notes**
+
+**JavaScript EventSource Example:**
+```javascript
+const eventSource = new EventSource('/api/v1/traders/score/stream', {
+  headers: {
+    'Authorization': 'Bearer ' + jwtToken
+  }
+});
+
+eventSource.onmessage = function(event) {
+  const scoreData = JSON.parse(event.data);
+  console.log('Score update:', scoreData);
+  // Update UI with new score/tier data
+};
+
+eventSource.onerror = function(error) {
+  console.error('SSE error:', error);
+};
+```
+
+This completes the comprehensive testing guide for all Unit 09 endpoints!
