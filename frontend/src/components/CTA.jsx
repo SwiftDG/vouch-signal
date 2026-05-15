@@ -66,7 +66,7 @@ export default function CTA() {
 
           <p className="font-['Inter'] text-base text-[#4A4A4A] max-w-xl mx-auto leading-relaxed mb-12">
             40 million Nigerian traders are invisible to the financial system.
-            VouchSignal changes that — one Squad transaction at a time.
+            Vouch changes that — one Squad transaction at a time.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">

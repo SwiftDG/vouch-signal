@@ -1,7 +1,19 @@
 import { motion } from "framer-motion";
 import AnimatedBackground from "../components/AnimatedBackground";
+import { supabase } from "../lib/supabase";
 
 export default function SignupPage() {
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo:
+          window.location.hostname === "localhost"
+            ? "http://localhost:5173/dashboard"
+            : "https://vouchsignal.vercel.app/dashboard",
+      },
+    });
+  };
   return (
     <div className="relative min-h-screen bg-white flex flex-col items-center justify-center px-6">
       <AnimatedBackground />
@@ -11,13 +23,13 @@ export default function SignupPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-5 mt-5"
         >
           <div
             onClick={() => (window.location.href = "/")}
             className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-2 cursor-pointer inline-block"
           >
-            Vouch<span className="text-[#A84551]">Signal</span>
+            Vou<span className="text-[#A84551]">ch</span>
           </div>
           <p className="font-['Inter'] text-sm text-[#8A6B70]">
             Build your financial identity — one transaction at a time
@@ -96,6 +108,7 @@ export default function SignupPage() {
           </div>
 
           <motion.button
+            onClick={handleGoogleSignIn}
             whileHover={{ scale: 1.02, borderColor: "#A84551" }}
             whileTap={{ scale: 0.98 }}
             className="w-full py-4 bg-white text-[#1A0A0D] font-['Inter'] font-semibold text-sm border border-[#E8DDE0] cursor-pointer transition-colors flex items-center justify-center gap-3"

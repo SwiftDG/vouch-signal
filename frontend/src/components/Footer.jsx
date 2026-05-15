@@ -14,7 +14,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="font-['Bricolage_Grotesque'] font-bold text-xl text-white mb-4">
-              Vouch<span className="text-[#A84551]">Signal</span>
+              Vou<span className="text-[#A84551]">ch</span>
             </div>
             <p className="font-['Inter'] text-sm text-white/40 leading-relaxed">
               Trust infrastructure for Nigeria's informal economy. Built on
@@ -62,9 +62,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="font-['Inter'] text-xs text-white/30">
-            © 2026 VouchSignal.
-          </p>
+          <p className="font-['Inter'] text-xs text-white/30">© 2026 Vouch.</p>
           <p className="font-['Inter'] text-xs text-white/30">
             Powered by Squad · GTCo · HabariPay
           </p>

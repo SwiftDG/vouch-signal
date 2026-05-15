@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp } from "lucide-react";
@@ -39,6 +40,20 @@ export default function DashboardPage() {
   const [tierFlash, setTierFlash] = useState(false);
   const seenSenders = useRef(new Set());
   const prevTierRef = useRef(1);
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
+  const displayName =
+    user?.user_metadata?.full_name || user?.email || "Mama Ngozi";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const tierInfo = getTier(score);
 
@@ -110,21 +125,24 @@ export default function DashboardPage() {
             onClick={() => (window.location.href = "/")}
             className="font-['Bricolage_Grotesque'] font-bold text-xl text-[#1A0A0D] cursor-pointer"
           >
-            Vouch<span className="text-[#A84551]">Signal</span>
+            Vou<span className="text-[#A84551]">ch</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-[#A84551] flex items-center justify-center">
                 <span className="font-['Inter'] text-xs text-white font-bold">
-                  MN
+                  {initials}
                 </span>
               </div>
               <span className="font-['Inter'] text-sm text-[#1A0A0D] hidden md:block">
-                Mama Ngozi
+                {displayName}
               </span>
             </div>
             <button
-              onClick={() => navigate("/login")}
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate("/login");
+              }}
               className="font-['Inter'] text-xs text-[#8A6B70] hover:text-[#A84551] transition-colors cursor-pointer border-none bg-transparent"
             >
               Sign out
@@ -176,6 +194,7 @@ export default function DashboardPage() {
               tier={tierInfo}
               simulating={simulating}
               transactions={transactions}
+              userName={displayName}
             />
 
             <TransactionFeed transactions={transactions} />

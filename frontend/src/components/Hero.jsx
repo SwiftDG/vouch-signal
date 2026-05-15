@@ -1,5 +1,6 @@
 import { motion, useAnimationFrame } from "framer-motion";
 import { useRef } from "react";
+import { supabase } from "../lib/supabase";
 function AnimatedBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -34,6 +35,17 @@ const fadeUp = {
 };
 
 export default function Hero() {
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo:
+          window.location.hostname === "localhost"
+            ? "http://localhost:5173/dashboard"
+            : "https://vouchsignal.vercel.app/dashboard",
+      },
+    });
+  };
   return (
     <section className="relative min-h-screen flex flex-col justify-center px-6 md:px-16 pt-32 pb-20 overflow-hidden bg-white">
       <AnimatedBackground />
@@ -54,7 +66,7 @@ export default function Hero() {
             className="font-['Inter'] text-base md:text-lg text-[#4A4A4A] leading-relaxed max-w-xl mb-10"
           >
             Mama Ngozi has sold fabric in Balogun for 15 years. The bank still
-            says no. VouchSignal turns every Squad transaction into a financial
+            says no. Vouch turns every Squad transaction into a financial
             identity — unlocking loans and credit for Nigeria's 40M+ invisible
             traders.
           </motion.p>
@@ -69,6 +81,7 @@ export default function Hero() {
               Get Started →
             </motion.button>
             <motion.button
+              onClick={handleGoogleSignIn}
               whileHover={{
                 scale: 1.03,
                 borderColor: "#A84551",
