@@ -4,10 +4,13 @@ import { motion, useInView } from "framer-motion";
 function Counter({ target, suffix = "" }) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const inView = useInView(ref, { margin: "-200px" });
+  const inView = useInView(ref, { margin: "-50px" });
 
   useEffect(() => {
-    if (!inView) return;
+    if (!inView) {
+      setCount(0);
+      return;
+    }
     let start = 0;
     const step = target / (1500 / 16);
     const timer = setInterval(() => {
@@ -44,14 +47,14 @@ export default function Stats() {
             key={i}
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-200px" }}
+            viewport={{ margin: "-50px" }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="px-8 md:px-12 py-10 hover:bg-[#F5F0F1] transition-colors"
+            className="px-4 md:px-12 py-8 hover:bg-[#F5F0F1] transition-colors"
           >
-            <div className="font-['Bricolage_Grotesque'] font-extrabold text-4xl md:text-5xl text-[#A84551] mb-2">
+            <div className="font-['Bricolage_Grotesque'] font-extrabold text-3xl md:text-5xl text-[#A84551] mb-2">
               <Counter target={s.number} suffix={s.suffix} />
             </div>
-            <div className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70]">
+            <div className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] leading-relaxed">
               {s.label}
             </div>
           </motion.div>

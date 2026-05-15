@@ -11,7 +11,9 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SignupPage from "./pages/Signup";
 import LoanPage from "./pages/LoanPage";
+import PageNotFound from "./pages/PageNotFound";
 import { supabase } from "./lib/supabase";
+import V2Page from "./pages/V2Page";
 
 function AuthCallback() {
   const navigate = useNavigate();
@@ -51,6 +53,8 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/loan" element={<LoanPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="*" element={<PageNotFound />} />
+        <Route path="/v2" element={<V2Page />} />
       </Routes>
     </BrowserRouter>
   );

@@ -117,7 +117,7 @@ export default function ParticleBurst() {
 
   return (
     <div
-      className="mt-20"
+      className="mt-20 w-full"
       style={{
         height: "520px",
 

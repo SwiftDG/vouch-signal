@@ -71,7 +71,9 @@ export default function Problem() {
         </div>
       </div>
       {/*Particle Burst animation */}
-      <ParticleBurst />
+      <div className="hidden lg:block">
+        <ParticleBurst />
+      </div>
     </section>
   );
 }
