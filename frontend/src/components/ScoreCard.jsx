@@ -70,12 +70,15 @@ export default function ScoreCard({
   const newCount = transactions.filter((tx) => !tx.isRepeat).length;
   const isNew = score === 0;
 
-  const handleScoreTap = () => {
+  const handleScoreTap = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     tapCount.current += 1;
     clearTimeout(tapTimer.current);
     tapTimer.current = setTimeout(() => {
       tapCount.current = 0;
     }, 500);
+
     if (tapCount.current >= 3) {
       tapCount.current = 0;
       if (onSimulate) onSimulate();
@@ -133,11 +136,10 @@ export default function ScoreCard({
         </div>
       ) : (
         <>
-          {/* Score — clickable for breakdown, tappable 3x for simulate */}
-          <div className="w-full">
+          {/* Score area with triple-tap support */}
+          <div onTouchStart={handleScoreTap} className="relative">
             <button
               onClick={() => setShowBreakdown((prev) => !prev)}
-              onTouchEnd={handleScoreTap}
               className="w-full text-left border-none bg-transparent cursor-pointer p-0"
             >
               <div className="flex items-end gap-4 mb-2">
