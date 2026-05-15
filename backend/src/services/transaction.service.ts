@@ -1,22 +1,79 @@
 import { PrismaClient, TransactionType } from '@prisma/client';
 import { VouchEngine, UserData } from '../engine/vouch.engine';
 import { detectCircularFraud, applyFraudPenalty } from '../engine/fraud.detector';
+import { disburseLoan } from './squad.service';
 
 const prisma = new PrismaClient();
 const engine = new VouchEngine();
 
 interface ChargeCompletedPayload {
-  transaction_ref: string;
-  amount: number;
-  merchant_id?: string;
+  transaction_reference: string;
+  virtual_account_number: string;
+  principal_amount: string;
+  sender_name?: string;
   [key: string]: unknown;
 }
 
 export function isChargeCompleted(payload: Record<string, unknown>): payload is ChargeCompletedPayload {
   return (
-    typeof payload['transaction_ref'] === 'string' &&
-    typeof payload['amount'] === 'number'
+    typeof payload['transaction_reference'] === 'string' &&
+    typeof payload['virtual_account_number'] === 'string' &&
+    typeof payload['principal_amount'] === 'string'
   );
+}
+
+async function evaluateTierUnlock(traderId: string, oldScore: number, newScore: number): Promise<void> {
+  // Check if score crossed the Tier 2 threshold (400 points)
+  if (oldScore < 400 && newScore >= 400) {
+    const trader = await prisma.trader.findUnique({
+      where: { id: traderId },
+      select: {
+        squadVirtualAccount: true,
+        businessName: true,
+        phoneNumber: true,
+        outstandingBalance: true,
+      },
+    });
+
+    if (!trader) return;
+
+    // Only disburse if no outstanding balance
+    if ((trader.outstandingBalance || 0) === 0) {
+      try {
+        const loanAmount = 50000; // ₦50,000 initial loan for Tier 3
+        const transactionRef = `LOAN_${Date.now()}_${traderId.slice(-8)}`;
+        
+        await disburseLoan(
+          loanAmount,
+          trader.squadVirtualAccount,
+          trader.businessName,
+          transactionRef
+        );
+
+        // Update outstanding balance
+        await prisma.trader.update({
+          where: { id: traderId },
+          data: { outstandingBalance: loanAmount },
+        });
+
+        // Log the disbursement
+        await prisma.scoreLedger.create({
+          data: {
+            traderId,
+            scoreChange: 0,
+            newTotalScore: newScore,
+            reason: `Tier 2 Unlock: ₦${loanAmount.toLocaleString()} loan disbursed automatically`,
+          },
+        });
+
+        console.log(`[tier-unlock] ₦${loanAmount.toLocaleString()} loan disbursed to ${trader.businessName}`);
+      } catch (error) {
+        console.error(`[tier-unlock] Failed to disburse loan:`, error);
+      }
+    } else {
+      console.log(`[tier-unlock] Tier 2 reached but loan blocked due to outstanding balance: ₦${trader.outstandingBalance}`);
+    }
+  }
 }
 
 async function buildUserData(traderId: string): Promise<UserData> {
@@ -80,20 +137,17 @@ export async function processWebhookTransaction(
     return;
   }
 
-  // amount from Squad is in kobo — convert to naira
-  const amount = payload.amount / 100;
-  const senderAccount = typeof payload['merchant_id'] === 'string' ? payload['merchant_id'] : null;
-
-  // Find trader by transaction ref prefix (merchant_id) or fall back to first trader for sandbox
-  const trader = await prisma.trader.findFirst({
-    where: senderAccount ? { squadVirtualAccount: { not: senderAccount } } : {},
-    orderBy: { createdAt: 'desc' },
+  const trader = await prisma.trader.findUnique({
+    where: { squadVirtualAccount: payload.virtual_account_number },
   });
 
   if (!trader) {
-    console.error(`[scoring] no trader found for squadEventId: ${squadEventId}`);
+    console.error(`[scoring] no trader found for virtual_account: ${payload.virtual_account_number}`);
     return;
   }
+
+  const amount = parseFloat(payload.principal_amount);
+  const senderAccount = typeof payload['sender_name'] === 'string' ? payload['sender_name'] : null;
 
   if (senderAccount) {
     const isFraud = await detectCircularFraud(senderAccount, trader.id);
@@ -112,7 +166,7 @@ export async function processWebhookTransaction(
       traderId: trader.id,
       amount,
       senderAccount,
-      squadReference: payload.transaction_ref,
+      squadReference: payload.transaction_reference,
       transactionType: TransactionType.INBOUND,
     },
   });
@@ -145,6 +199,9 @@ export async function processWebhookTransaction(
       data: { processingStatus: 'PROCESSED' },
     }),
   ]);
+
+  // Unit 06: Tier evaluation hook
+  await evaluateTierUnlock(trader.id, trader.currentScore, profile.Final_Score);
 
   console.log(`[scoring] ${reason}`);
 }

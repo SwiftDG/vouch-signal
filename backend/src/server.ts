@@ -4,6 +4,8 @@ import { config } from './config/env';
 import healthRouter from './routes/health.route';
 import traderRouter from './routes/trader.route';
 import webhookRouter from './routes/webhook.route';
+import lenderRouter from './routes/lender.route';
+import debugRouter from './routes/debug/debug.route';
 
 const app = express();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 
 app.use('/api/v1', healthRouter);
 app.use('/api/v1/traders', traderRouter);
+app.use('/api/v1/lenders', lenderRouter);
+app.use('/api/v1/debug', debugRouter);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction): void => {
   console.error(err.message);

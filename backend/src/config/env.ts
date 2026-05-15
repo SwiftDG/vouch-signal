@@ -15,4 +15,5 @@ export const config = {
   squadPublicKey: required('SQUAD_PUBLIC_KEY'),
   squadSecretKey: required('SQUAD_SECRET_KEY'),
   encryptionKey: required('ENCRYPTION_KEY'),
+  partnerApiKeys: (process.env['PARTNER_API_KEYS'] || '').split(',').filter(Boolean),
 };

@@ -5,52 +5,29 @@ import { processAjoEvent } from '../services/ajo.service';
 
 const prisma = new PrismaClient();
 
-interface SquadWebhookBody {
-  amount: number;
-  transaction_ref: string;
-  transaction_status: string;
-  merchant_id: string;
-  currency: string;
-  transaction_type: string;
-  is_recurring: boolean;
-  [key: string]: unknown;
-}
-
 interface SquadWebhookPayload {
-  Event: string;
-  TransactionRef: string;
-  Body: SquadWebhookBody;
+  transaction_reference: string;
+  virtual_account_number: string;
+  principal_amount: string;
+  transaction_indicator: string;
+  sender_name?: string;
+  [key: string]: unknown;
 }
 
 function isSquadPayload(body: unknown): body is SquadWebhookPayload {
   if (typeof body !== 'object' || body === null) return false;
   const b = body as Record<string, unknown>;
   return (
-    typeof b['Event'] === 'string' &&
-    typeof b['TransactionRef'] === 'string' &&
-    typeof b['Body'] === 'object' && b['Body'] !== null
+    typeof b['transaction_reference'] === 'string' &&
+    typeof b['virtual_account_number'] === 'string' &&
+    typeof b['transaction_indicator'] === 'string'
   );
 }
 
 async function processAsync(squadEventId: string, payload: SquadWebhookPayload): Promise<void> {
-  if (payload.Body.is_recurring) {
-    const event = payload.Body.transaction_status === 'Success'
-      ? 'recurring.completed'
-      : 'recurring.failed';
-
-    const merchantId = payload.Body.merchant_id;
-    const trader = await prisma.trader.findFirst({
-      where: { squadVirtualAccount: merchantId },
-    });
-
-    if (trader) {
-      await processAjoEvent(trader.id, event as 'recurring.completed' | 'recurring.failed');
-    }
-    return;
-  }
-
-  if (payload.Event === 'charge_successful' && payload.Body.transaction_status === 'Success') {
-    await processWebhookTransaction(squadEventId, payload.Body);
+  // Only process credit transactions (C = credit, D = debit)
+  if (payload.transaction_indicator === 'C') {
+    await processWebhookTransaction(squadEventId, payload);
   }
 }
 
@@ -60,7 +37,7 @@ export async function handleSquadWebhook(req: Request, res: Response): Promise<v
     return;
   }
 
-  const squadEventId = req.body.TransactionRef;
+  const squadEventId = req.body.transaction_reference;
 
   const existing = await prisma.webhookEvent.findUnique({
     where: { squadEventId },
@@ -74,7 +51,7 @@ export async function handleSquadWebhook(req: Request, res: Response): Promise<v
   await prisma.webhookEvent.create({
     data: {
       squadEventId,
-      eventType: req.body.Event,
+      eventType: 'virtual_account_credit',
       payload: JSON.parse(JSON.stringify(req.body)),
       processingStatus: 'PENDING',
     },
