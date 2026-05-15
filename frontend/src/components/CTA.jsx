@@ -58,7 +58,7 @@ export default function CTA() {
             <div className="w-6 h-px bg-[#A84551]" />
           </div>
 
-          <h2 className="font-['Syne'] font-extrabold text-5xl md:text-7xl text-[#1A0A0D] leading-tight mb-6">
+          <h2 className="font-['Bricolage_Grotesque'] font-extrabold text-5xl md:text-7xl text-[#1A0A0D] leading-tight mb-6">
             Every trader deserves
             <br />
             <span className="text-[#A84551]">to be seen.</span>

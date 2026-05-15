@@ -27,7 +27,7 @@ You are the implementation engine. The architect has already decided what to bui
 - Use Framer Motion for all animations — never CSS keyframes
 - Export components as default exports — never named exports
 - Use the exact color tokens from `code-standards.md`
-- Use Syne for headings and DM Mono for body text consistently
+- Use Bricolage_Grotesquefor headings and DM Mono for body text consistently
 - Update `progress-tracker.md` after completing each component
 
 ## What You Must Never Do
@@ -43,6 +43,7 @@ You are the implementation engine. The architect has already decided what to bui
 ## Verification Before Marking Complete
 
 Before marking any component done, confirm:
+
 - [ ] Component renders without console errors
 - [ ] Tailwind classes apply correctly (colors, spacing, typography match design)
 - [ ] Framer Motion animation triggers on scroll

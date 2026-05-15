@@ -48,7 +48,7 @@ export default function Stats() {
             transition={{ delay: i * 0.1, duration: 0.5 }}
             className="px-8 md:px-12 py-10 hover:bg-[#F5F0F1] transition-colors"
           >
-            <div className="font-['Syne'] font-extrabold text-4xl md:text-5xl text-[#A84551] mb-2">
+            <div className="font-['Bricolage_Grotesque'] font-extrabold text-4xl md:text-5xl text-[#A84551] mb-2">
               <Counter target={s.number} suffix={s.suffix} />
             </div>
             <div className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70]">

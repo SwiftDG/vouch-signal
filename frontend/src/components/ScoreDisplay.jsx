@@ -131,7 +131,7 @@ export default function ScoreDisplay() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ margin: "-50px" }}
               transition={{ duration: 0.8, delay: 0.4, type: "spring" }}
-              className="font-['Syne'] font-extrabold text-8xl text-white leading-none"
+              className="font-['Bricolage_Grotesque'] font-extrabold text-8xl text-white leading-none"
             >
               714
             </motion.div>
@@ -188,7 +188,7 @@ export default function ScoreDisplay() {
               viewport={{ margin: "-50px" }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
             >
-              <div className="font-['Syne'] font-extrabold text-5xl text-[#E8B4BA] mb-2">
+              <div className="font-['Bricolage_Grotesque'] font-extrabold text-5xl text-[#E8B4BA] mb-2">
                 {s.number}
               </div>
               <div className="font-['Inter'] text-sm text-white/50">

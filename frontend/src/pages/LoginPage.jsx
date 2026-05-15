@@ -85,7 +85,7 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="font-['Syne'] font-bold text-3xl text-[#1A0A0D] mb-2">
+          <div className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-2">
             Vouch<span className="text-[#A84551]">Signal</span>
           </div>
           <p className="font-['Inter'] text-sm text-[#8A6B70]">
@@ -100,7 +100,7 @@ export default function LoginPage() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="bg-white border border-[#E8DDE0] p-8 shadow-sm"
         >
-          <h1 className="font-['Syne'] font-bold text-2xl text-[#1A0A0D] mb-2">
+          <h1 className="font-['Bricolage_Grotesque'] font-bold text-2xl text-[#1A0A0D] mb-2">
             Welcome back
           </h1>
           <p className="font-['Inter'] text-sm text-[#8A6B70] mb-8">

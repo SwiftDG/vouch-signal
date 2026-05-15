@@ -22,6 +22,7 @@ White:          #EAF2FF   — headlines and high-emphasis text
 ```
 
 In Tailwind bracket notation:
+
 ```jsx
 bg-[#060C18]     // background
 bg-[#0D1A2E]     // surface
@@ -36,12 +37,12 @@ text-[#EAF2FF]   // white/headlines
 
 ## Typography
 
-**Display / Headlines:** Syne, weight 700–800
+**Display / Headlines:** Bricolage_Grotesque, weight 700–800
 **Body / Labels / Code:** DM Mono, weight 300–500
 
 ```jsx
 // Section headline
-<h2 className="font-['Syne'] font-bold text-5xl text-[#EAF2FF]">
+<h2 className="font-['Bricolage_Grotesque'] font-bold text-5xl text-[#EAF2FF]">
 
 // Body text
 <p className="font-['DM_Mono'] text-sm text-[#C8D6E8] leading-relaxed">
@@ -50,12 +51,13 @@ text-[#EAF2FF]   // white/headlines
 <span className="font-['DM_Mono'] text-xs uppercase tracking-widest text-[#E85D04]">
 
 // Stat number
-<span className="font-['Syne'] font-extrabold text-6xl text-[#E85D04]">
+<span className="font-['Bricolage_Grotesque'] font-extrabold text-6xl text-[#E85D04]">
 ```
 
 ## Spacing System
 
 Use Tailwind spacing consistently:
+
 - Section vertical padding: `py-24` (desktop) `py-16` (mobile)
 - Section horizontal padding: `px-6` (mobile) `px-12` (desktop via `md:px-12`)
 - Max content width: `max-w-6xl mx-auto`
@@ -65,6 +67,7 @@ Use Tailwind spacing consistently:
 ## Component Patterns
 
 ### Section tag (appears above every section title):
+
 ```jsx
 <div className="flex items-center gap-2 mb-4">
   <div className="w-6 h-px bg-[#E85D04]" />
@@ -75,13 +78,15 @@ Use Tailwind spacing consistently:
 ```
 
 ### Section headline:
+
 ```jsx
-<h2 className="font-['Syne'] font-bold text-5xl md:text-6xl text-[#EAF2FF] leading-tight mb-6">
+<h2 className="font-['Bricolage_Grotesque'] font-bold text-5xl md:text-6xl text-[#EAF2FF] leading-tight mb-6">
   Headline <span className="text-[#E85D04]">highlight</span>
 </h2>
 ```
 
 ### Card (surface card with orange top accent):
+
 ```jsx
 <div className="relative bg-[#0D1A2E] border border-[#1E3459] p-8 hover:bg-[#112240] transition-colors">
   <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#E85D04]" />
@@ -90,6 +95,7 @@ Use Tailwind spacing consistently:
 ```
 
 ### Primary button:
+
 ```jsx
 <button className="font-['DM_Mono'] text-xs uppercase tracking-widest px-8 py-4 bg-[#E85D04] text-[#EAF2FF] hover:bg-[#FF8C42] transition-colors">
   Get Started
@@ -97,6 +103,7 @@ Use Tailwind spacing consistently:
 ```
 
 ### Secondary button:
+
 ```jsx
 <button className="font-['DM_Mono'] text-xs uppercase tracking-widest px-8 py-4 bg-transparent text-[#EAF2FF] border border-[#1E3459] hover:border-[#E85D04] hover:text-[#E85D04] transition-colors">
   Learn More
@@ -104,6 +111,7 @@ Use Tailwind spacing consistently:
 ```
 
 ### Grid with visible dividers (like stats row):
+
 ```jsx
 <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-[#1E3459] border border-[#1E3459]">
   {/* items */}
@@ -113,15 +121,15 @@ Use Tailwind spacing consistently:
 ## Layout Patterns
 
 **Full-width section with max-width content:**
+
 ```jsx
 <section className="bg-[#060C18] py-24">
-  <div className="max-w-6xl mx-auto px-6 md:px-12">
-    {/* content */}
-  </div>
+  <div className="max-w-6xl mx-auto px-6 md:px-12">{/* content */}</div>
 </section>
 ```
 
 **Two-column text + visual:**
+
 ```jsx
 <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
   <div>{/* text */}</div>
@@ -130,6 +138,7 @@ Use Tailwind spacing consistently:
 ```
 
 **Three-column card grid:**
+
 ```jsx
 <div className="grid grid-cols-1 md:grid-cols-3 gap-1 bg-[#1E3459]">
   {/* cards with bg-[#0D1A2E] */}
@@ -156,22 +165,25 @@ The main page background uses a subtle grid overlay. Apply to the root wrapper i
 ## Animation Defaults
 
 Standard scroll reveal — use on every section and card:
+
 ```jsx
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
-}
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
 ```
 
 Stagger container — use when revealing multiple cards:
+
 ```jsx
 const container = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } }
-}
+  visible: { transition: { staggerChildren: 0.1 } },
+};
 ```
 
 Counter animation — use for stat numbers:
+
 ```jsx
 // Use framer-motion's useMotionValue and useSpring to animate numbers counting up
 // from 0 to target value on scroll into view

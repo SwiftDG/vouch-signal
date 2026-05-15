@@ -70,7 +70,7 @@ export default function LoanUnlock({
               {accepted ? <CheckCircle /> : info.emoji}
             </motion.span>
             <div>
-              <p className="font-['Syne'] font-bold text-lg text-[#1A0A0D]">
+              <p className="font-['Bricolage_Grotesque'] font-bold text-lg text-[#1A0A0D]">
                 {accepted ? "Loan Disbursed Successfully!" : info.title}
               </p>
               <p className="font-['Inter'] text-sm text-[#8A6B70]">
@@ -87,7 +87,7 @@ export default function LoanUnlock({
                 <p className="font-['Inter'] text-xs text-[#8A6B70]">
                   Available Credit
                 </p>
-                <p className="font-['Syne'] font-bold text-2xl text-[#A84551]">
+                <p className="font-['Bricolage_Grotesque'] font-bold text-2xl text-[#A84551]">
                   ₦{limit.toLocaleString()}
                 </p>
               </div>

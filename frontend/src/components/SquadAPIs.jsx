@@ -99,7 +99,7 @@ export default function SquadAPIs() {
               Squad API Integration
             </span>
           </div>
-          <h2 className="font-['Syne'] font-bold text-4xl md:text-6xl text-white leading-tight max-w-2xl">
+          <h2 className="font-['Bricolage_Grotesque'] font-bold text-4xl md:text-6xl text-white leading-tight max-w-2xl">
             Squad is not optional.
             <br />
             <span className="text-[#A84551]">Squad is the engine.</span>
@@ -120,7 +120,7 @@ export default function SquadAPIs() {
               <div className="w-10 h-10 bg-[#A84551]/10 border border-[#A84551]/20 flex items-center justify-center text-[#A84551] mb-5 rounded-sm">
                 {api.icon}
               </div>
-              <h3 className="font-['Syne'] font-bold text-base text-white mb-3">
+              <h3 className="font-['Bricolage_Grotesque'] font-bold text-base text-white mb-3">
                 {api.name}
               </h3>
               <p className="font-['Inter'] text-sm text-white/50 leading-relaxed">

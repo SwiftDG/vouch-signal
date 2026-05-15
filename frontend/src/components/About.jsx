@@ -76,7 +76,7 @@ export default function About() {
               About
             </span>
           </div>
-          <h2 className="font-['Syne'] font-bold text-4xl md:text-6xl text-[#1A0A0D] leading-tight mb-16">
+          <h2 className="font-['Bricolage_Grotesque'] font-bold text-4xl md:text-6xl text-[#1A0A0D] leading-tight mb-16">
             Built for the
             <br />
             <span className="text-[#A84551]">invisible economy.</span>
@@ -92,7 +92,7 @@ export default function About() {
               <div className="w-10 h-10 bg-[#A84551]/10 border border-[#A84551]/20 flex items-center justify-center mb-5 rounded-sm">
                 {v.icon}
               </div>
-              <h3 className="font-['Syne'] font-bold text-lg text-[#1A0A0D] mb-3">
+              <h3 className="font-['Bricolage_Grotesque'] font-bold text-lg text-[#1A0A0D] mb-3">
                 {v.title}
               </h3>
               <p className="font-['Inter'] text-sm text-[#8A6B70] leading-relaxed">

@@ -13,7 +13,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
           <div>
-            <div className="font-['Syne'] font-bold text-xl text-white mb-4">
+            <div className="font-['Bricolage_Grotesque'] font-bold text-xl text-white mb-4">
               Vouch<span className="text-[#A84551]">Signal</span>
             </div>
             <p className="font-['Inter'] text-sm text-white/40 leading-relaxed">

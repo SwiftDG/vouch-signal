@@ -42,7 +42,7 @@ export default function Hero() {
         <motion.div variants={container} initial="hidden" animate="visible">
           <motion.h1
             variants={fadeUp}
-            className="font-['Syne'] font-extrabold text-5xl md:text-7xl text-[#1A0A0D] leading-tight mb-6"
+            className="font-['Bricolage_Grotesque'] font-extrabold text-5xl md:text-7xl text-[#1A0A0D] leading-tight mb-6"
           >
             Your business
             <br />
@@ -111,7 +111,7 @@ export default function Hero() {
                 (brand) => (
                   <span
                     key={brand}
-                    className="font-['Syne'] font-bold text-lg text-[#1A0A0D]"
+                    className="font-['Bricolage_Grotesque'] font-bold text-lg text-[#1A0A0D]"
                   >
                     {brand}
                   </span>

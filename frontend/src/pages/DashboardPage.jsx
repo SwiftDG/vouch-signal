@@ -108,7 +108,7 @@ export default function DashboardPage() {
         <nav className="bg-white/80 backdrop-blur-md border-b border-[#E8DDE0] px-6 md:px-12 py-4 flex items-center justify-between">
           <div
             onClick={() => (window.location.href = "/")}
-            className="font-['Syne'] font-bold text-xl text-[#1A0A0D] cursor-pointer"
+            className="font-['Bricolage_Grotesque'] font-bold text-xl text-[#1A0A0D] cursor-pointer"
           >
             Vouch<span className="text-[#A84551]">Signal</span>
           </div>
@@ -134,7 +134,7 @@ export default function DashboardPage() {
 
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
           <div className="mb-8">
-            <h1 className="font-['Syne'] font-bold text-3xl text-[#1A0A0D] mb-1">
+            <h1 className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-1">
               Good morning, Mama Ngozi 👋
             </h1>
             <p className="font-['Inter'] text-sm text-[#8A6B70]">
@@ -171,7 +171,13 @@ export default function DashboardPage() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <ScoreCard score={score} tier={tierInfo} simulating={simulating} />
+            <ScoreCard
+              score={score}
+              tier={tierInfo}
+              simulating={simulating}
+              transactions={transactions}
+            />
+
             <TransactionFeed transactions={transactions} />
           </div>
         </div>

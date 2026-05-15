@@ -45,14 +45,14 @@ Build the complete Vouch Signal homepage with all 8 sections, fully animated and
 
 - Tailwind v4 — uses `@import "tailwindcss"` in index.css, no config file needed
 - Framer Motion for all animations — no CSS keyframes
-- Google Fonts loaded via index.html link tag (Syne + DM Mono)
+- Google Fonts loaded via index.html link tag (Bricolage_Grotesque+ DM Mono)
 - React Router DOM for routing — currently only one route (HomePage)
 - No state management library — useState/useEffect sufficient for current scope
 
 ## Session Notes
 
 - Color palette locked: navy #060C18, orange #E85D04, teal #4AF0C4
-- Font pair locked: Syne (headings) + DM Mono (body)
+- Font pair locked: Bricolage_Grotesque(headings) + DM Mono (body)
 - Homepage section order: Nav → Hero → Stats → Problem → HowItWorks → ScoreDisplay → SquadAPIs → CTA
 - Squad API calls are backend only — frontend never calls Squad directly
 - Emmanuel owns backend folder, David owns frontend folder

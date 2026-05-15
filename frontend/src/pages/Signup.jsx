@@ -15,7 +15,7 @@ export default function SignupPage() {
         >
           <div
             onClick={() => (window.location.href = "/")}
-            className="font-['Syne'] font-bold text-3xl text-[#1A0A0D] mb-2 cursor-pointer inline-block"
+            className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-2 cursor-pointer inline-block"
           >
             Vouch<span className="text-[#A84551]">Signal</span>
           </div>
@@ -30,7 +30,7 @@ export default function SignupPage() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="bg-white border border-[#E8DDE0] p-8 shadow-sm"
         >
-          <h1 className="font-['Syne'] font-bold text-2xl text-[#1A0A0D] mb-2">
+          <h1 className="font-['Bricolage_Grotesque'] font-bold text-2xl text-[#1A0A0D] mb-2">
             Create your account
           </h1>
           <p className="font-['Inter'] text-sm text-[#8A6B70] mb-8">

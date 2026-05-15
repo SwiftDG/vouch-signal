@@ -5,14 +5,10 @@
 Every component follows this exact pattern:
 
 ```jsx
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
 
 export default function ComponentName() {
-  return (
-    <section className="...">
-      {/* content */}
-    </section>
-  )
+  return <section className="...">{/* content */}</section>;
 }
 ```
 
@@ -22,13 +18,13 @@ export default function ComponentName() {
 
 ## Naming Conventions
 
-| Type | Convention | Example |
-|------|-----------|---------|
-| Components | PascalCase | `ScoreDisplay.jsx` |
-| Pages | PascalCase | `HomePage.jsx` |
+| Type        | Convention              | Example                               |
+| ----------- | ----------------------- | ------------------------------------- |
+| Components  | PascalCase              | `ScoreDisplay.jsx`                    |
+| Pages       | PascalCase              | `HomePage.jsx`                        |
 | CSS classes | Tailwind utilities only | `className="flex items-center gap-4"` |
-| Variables | camelCase | `const traderScore = 714` |
-| Constants | UPPER_SNAKE_CASE | `const MAX_SCORE = 1000` |
+| Variables   | camelCase               | `const traderScore = 714`             |
+| Constants   | UPPER_SNAKE_CASE        | `const MAX_SCORE = 1000`              |
 
 ## Tailwind Patterns
 
@@ -43,44 +39,50 @@ Always use Tailwind utility classes. Never write custom CSS except in `index.css
 ```
 
 Custom color values use bracket notation:
+
 ```jsx
-className="bg-[#060C18] text-[#E85D04] border-[#1E3459]"
+className = "bg-[#060C18] text-[#E85D04] border-[#1E3459]";
 ```
 
 ## Color Tokens (use these consistently)
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| Background | `#060C18` | Page background |
-| Surface | `#0D1A2E` | Card backgrounds |
-| Surface2 | `#112240` | Hover states |
-| Border | `#1E3459` | All borders |
-| Accent Orange | `#E85D04` | Primary CTAs, highlights |
-| Accent Orange Light | `#FF8C42` | Hover states |
-| Accent Teal | `#4AF0C4` | Secondary accents |
-| Text | `#C8D6E8` | Body text |
-| Muted | `#4A6080` | Secondary text, labels |
-| White | `#EAF2FF` | Headlines |
+| Token               | Value     | Usage                    |
+| ------------------- | --------- | ------------------------ |
+| Background          | `#060C18` | Page background          |
+| Surface             | `#0D1A2E` | Card backgrounds         |
+| Surface2            | `#112240` | Hover states             |
+| Border              | `#1E3459` | All borders              |
+| Accent Orange       | `#E85D04` | Primary CTAs, highlights |
+| Accent Orange Light | `#FF8C42` | Hover states             |
+| Accent Teal         | `#4AF0C4` | Secondary accents        |
+| Text                | `#C8D6E8` | Body text                |
+| Muted               | `#4A6080` | Secondary text, labels   |
+| White               | `#EAF2FF` | Headlines                |
 
 ## Typography
 
-| Element | Font | Weight | Size |
-|---------|------|--------|------|
-| Hero headline | Syne | 800 | `text-7xl` to `text-9xl` |
-| Section titles | Syne | 700 | `text-4xl` to `text-6xl` |
-| Card titles | Syne | 700 | `text-base` |
-| Body text | DM Mono | 400 | `text-sm` |
-| Labels/tags | DM Mono | 400 | `text-xs` uppercase tracking-widest |
-| Numbers/stats | Syne | 800 | `text-5xl` to `text-7xl` |
+| Element        | Font                | Weight | Size                                |
+| -------------- | ------------------- | ------ | ----------------------------------- |
+| Hero headline  | Bricolage_Grotesque | 800    | `text-7xl` to `text-9xl`            |
+| Section titles | Bricolage_Grotesque | 700    | `text-4xl` to `text-6xl`            |
+| Card titles    | Bricolage_Grotesque | 700    | `text-base`                         |
+| Body text      | DM Mono             | 400    | `text-sm`                           |
+| Labels/tags    | DM Mono             | 400    | `text-xs` uppercase tracking-widest |
+| Numbers/stats  | Bricolage_Grotesque | 800    | `text-5xl` to `text-7xl`            |
 
 Fonts are loaded via Google Fonts in `index.html`:
+
 ```html
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link
+  href="https://fonts.googleapis.com/css2?family=Bricolage_Grotesque:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap"
+  rel="stylesheet"
+/>
 ```
 
 ## Framer Motion Patterns
 
 ### Standard scroll reveal (use on every section):
+
 ```jsx
 import { motion } from 'framer-motion'
 
@@ -98,6 +100,7 @@ const fadeUp = {
 ```
 
 ### Staggered children:
+
 ```jsx
 const container = {
   hidden: {},

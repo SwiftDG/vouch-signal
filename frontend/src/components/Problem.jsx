@@ -35,7 +35,7 @@ export default function Problem() {
               The Problem
             </span>
           </div>
-          <h2 className="font-['Syne'] font-bold text-4xl md:text-6xl text-[#1A0A0D] leading-tight mb-16">
+          <h2 className="font-['Bricolage_Grotesque'] font-bold text-4xl md:text-6xl text-[#1A0A0D] leading-tight mb-16">
             Financially <span className="text-[#A84551]">invisible.</span>
             <br />
             Economically real.
@@ -57,10 +57,10 @@ export default function Problem() {
               className="relative bg-[#FAFAFA] border border-[#E8DDE0] p-8 cursor-default"
             >
               <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#A84551]" />
-              <div className="font-['Syne'] font-extrabold text-6xl text-[#16070A] opacity-30 mb-6">
+              <div className="font-['Bricolage_Grotesque'] font-extrabold text-6xl text-[#16070A] opacity-30 mb-6">
                 {p.num}
               </div>
-              <h3 className="font-['Syne'] font-bold text-lg text-[#1A0A0D] mb-4">
+              <h3 className="font-['Bricolage_Grotesque'] font-bold text-lg text-[#1A0A0D] mb-4">
                 {p.title}
               </h3>
               <p className="font-['Inter'] text-sm text-[#4A4A4A] leading-relaxed">

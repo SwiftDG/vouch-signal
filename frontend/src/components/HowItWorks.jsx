@@ -99,7 +99,7 @@ export default function HowItWorks() {
               How It Works
             </span>
           </div>
-          <h2 className="font-['Syne'] font-bold text-4xl md:text-6xl text-[#1A0A0D] leading-tight mb-16">
+          <h2 className="font-['Bricolage_Grotesque'] font-bold text-4xl md:text-6xl text-[#1A0A0D] leading-tight mb-16">
             Four steps to your
             <br />
             <span className="text-[#A84551]">financial identity.</span>
@@ -116,7 +116,7 @@ export default function HowItWorks() {
                 {s.num}
               </div>
               <div className="mb-4">{s.icon}</div>
-              <h3 className="font-['Syne'] font-bold text-base text-[#1A0A0D] mb-3">
+              <h3 className="font-['Bricolage_Grotesque'] font-bold text-base text-[#1A0A0D] mb-3">
                 {s.title}
               </h3>
               <p className="font-['Inter'] text-sm text-[#8A6B70] leading-relaxed">
