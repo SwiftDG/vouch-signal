@@ -56,9 +56,9 @@ export default function Hero() {
             variants={fadeUp}
             className="font-['Bricolage_Grotesque'] font-extrabold text-5xl md:text-7xl text-[#1A0A0D] leading-tight mb-6"
           >
-            Your business
+            Let the score
             <br />
-            <span className="text-[#A84551]">deserves</span> credit.
+            <span className="text-[#A84551]">speak on</span> your behalf.
           </motion.h1>
 
           <motion.p

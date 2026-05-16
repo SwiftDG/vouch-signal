@@ -12,6 +12,8 @@ import DashboardPage from "./pages/DashboardPage";
 import SignupPage from "./pages/Signup";
 import LoanPage from "./pages/LoanPage";
 import PageNotFound from "./pages/PageNotFound";
+import JobsPage from "./pages/JobsPage";
+import AjoPage from "./pages/AjoPage";
 import { supabase } from "./lib/supabase";
 import V2Page from "./pages/V2Page";
 
@@ -55,6 +57,8 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="*" element={<PageNotFound />} />
         <Route path="/v2" element={<V2Page />} />
+        <Route path="/jobs" element={<JobsPage />} />
+        <Route path="/ajo" element={<AjoPage />} />
       </Routes>
     </BrowserRouter>
   );

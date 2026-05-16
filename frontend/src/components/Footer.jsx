@@ -6,6 +6,7 @@ const links = {
     { label: "Market Score", href: "#score" },
     { label: "Squad APIs", href: "#squad-apis" },
     { label: "V2 Roadmap", href: "/v2" },
+    { label: "Job Directory", href: "/jobs" },
   ],
   Company: [
     { label: "About", href: "#about" },

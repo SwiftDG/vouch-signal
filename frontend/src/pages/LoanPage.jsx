@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { supabase } from "../lib/supabase";
@@ -65,7 +66,7 @@ export default function LoanPage() {
             transition={{ duration: 0.5, type: "spring" }}
           >
             <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">✅</span>
+              <CheckCircle size={40} className="text-green-500" />
             </div>
             <h1 className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-3">
               Loan Disbursed!

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Briefcase, Users } from "lucide-react";
 import ScoreCard from "../components/ScoreCard";
 import TransactionFeed from "../components/TransactionFeed";
 import LoanUnlock from "../components/LoanUnlock";
@@ -313,6 +313,67 @@ export default function DashboardPage() {
               onSimulate={simulate}
             />
             <TransactionFeed transactions={transactions} />
+          </div>
+          {/* Quick links */}
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate("/jobs")}
+              className="relative bg-white border border-[#E8DDE0] p-6 cursor-pointer hover:border-[#A84551] transition-colors"
+            >
+              <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#A84551]" />
+              <Briefcase size={24} className="text-[#A84551] mb-3" />
+              <h3 className="font-['Bricolage_Grotesque'] font-bold text-base text-[#1A0A0D] mb-1">
+                Job Directory
+              </h3>
+              <p className="font-['Inter'] text-xs text-[#8A6B70]">
+                Find micro-jobs with verified employers
+              </p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate("/ajo")}
+              className="relative bg-white border border-[#E8DDE0] p-6 cursor-pointer hover:border-[#A84551] transition-colors"
+            >
+              <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#A84551]" />
+              <Users size={24} className="text-[#A84551] mb-3" />
+              <h3 className="font-['Bricolage_Grotesque'] font-bold text-base text-[#1A0A0D] mb-1">
+                Ajo Circles
+              </h3>
+              <p className="font-['Inter'] text-xs text-[#8A6B70]">
+                Save together with your community
+              </p>
+            </motion.div>
+          </div>
+          {/* Mobile simulate button — visible only on small screens */}
+          <div className="flex md:hidden justify-center mt-8">
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={simulate}
+              disabled={simulating}
+              className="flex items-center gap-2 px-6 py-3 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer disabled:opacity-50"
+            >
+              {simulating ? (
+                <>
+                  <motion.div
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                  Simulating...
+                </>
+              ) : (
+                "Simulate Transactions"
+              )}
+            </motion.button>
           </div>
         </div>
 

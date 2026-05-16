@@ -1,5 +1,5 @@
-import axios from 'axios';
-import { config } from '../config/env';
+import axios from "axios";
+import { config } from "../config/env";
 
 interface VirtualAccountPayload {
   customer_identifier: string;
@@ -28,7 +28,7 @@ interface TransferResponse {
 }
 
 export async function createVirtualAccount(
-  payload: VirtualAccountPayload
+  payload: VirtualAccountPayload,
 ): Promise<VirtualAccountResponse> {
   try {
     const response = await axios.post<{ data: VirtualAccountResponse }>(
@@ -37,14 +37,16 @@ export async function createVirtualAccount(
       {
         headers: {
           Authorization: `Bearer ${config.squadSecretKey}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         timeout: 10000,
-      }
+      },
     );
     return response.data.data;
   } catch (error) {
-    throw new Error(`Squad API failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Squad API failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
@@ -52,13 +54,13 @@ export async function disburseLoan(
   amount: number,
   virtualAccount: string,
   traderName: string,
-  transactionRef: string
+  transactionRef: string,
 ): Promise<TransferResponse> {
   try {
     const transferPayload = {
       remark: `Loan disbursement to ${traderName}`,
-      bank_code: '000013',
-      currency_id: 'NGN',
+      bank_code: "000013",
+      currency_id: "NGN",
       amount: (amount * 100).toString(), // Convert to kobo
       account_number: virtualAccount,
       transaction_reference: transactionRef,
@@ -71,18 +73,20 @@ export async function disburseLoan(
       {
         headers: {
           Authorization: `Bearer ${config.squadSecretKey}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         timeout: 15000,
-      }
+      },
     );
 
-    console.log(`✅ Loan disbursed: ₦${amount.toLocaleString()} to ${virtualAccount}`);
+    console.log(
+      `✅ Loan disbursed: ₦${amount.toLocaleString()} to ${virtualAccount}`,
+    );
     return response.data;
   } catch (error) {
     console.error(`❌ Loan disbursement failed:`, error);
-    throw new Error(`Squad Transfer API failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Squad Transfer API failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
-
-

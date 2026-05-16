@@ -30,18 +30,20 @@ export default function Nav() {
 
       <ul className="hidden md:flex items-center gap-10 list-none m-0 p-0">
         {[
-          { label: "How it Works", id: "how-it-works" },
-          { label: "Score", id: "score" },
-          { label: "Squad APIs", id: "squad-apis" },
-          { label: "About", id: "about" },
+          { label: "How it Works", href: "#how-it-works" },
+          { label: "Score", href: "#score" },
+          { label: "Squad APIs", href: "#squad-apis" },
+          { label: "About", href: "#about" },
         ].map((link) => (
           <li key={link.label}>
             <a
-              href={`#${link.id}`}
+              href={link.href}
               onClick={(e) => {
-                e.preventDefault();
-                const el = document.getElementById(link.id);
-                if (el) el.scrollIntoView({ behavior: "smooth" });
+                if (link.href.startsWith("#")) {
+                  e.preventDefault();
+                  const el = document.getElementById(link.href.slice(1));
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }
               }}
               className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] hover:text-[#A84551] transition-colors no-underline"
             >
