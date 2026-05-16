@@ -17,7 +17,7 @@ Traditional credit systems require tax documents, collateral, and formal bank hi
 
 ## The Solution
 
-VouchSignal turns every Squad transaction into a financial identity.
+Vouch turns every Squad transaction into a financial identity.
 
 Every payment a trader receives, every repeat customer who comes back, every consistent day of sales — all of it becomes data that feeds the **Market Reputation Score** (0–1,000). When the score crosses thresholds, financial products unlock automatically. No applications. No paperwork. No loan officers.
 
@@ -63,7 +63,7 @@ The scoring algorithm operates on a **30-Day Rolling Window** across four variab
 
 ## Squad API Integration
 
-VouchSignal is built entirely on Squad's infrastructure — not as an add-on, but as the foundation.
+Vouch is built entirely on Squad's infrastructure — not as an add-on, but as the foundation.
 
 | API | Role |
 |-----|------|
