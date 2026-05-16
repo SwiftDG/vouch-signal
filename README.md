@@ -1,4 +1,4 @@
-# VouchSignal
+# Vouch
 
 > Trust infrastructure for Nigeria's informal economy. Built on Squad.
 
