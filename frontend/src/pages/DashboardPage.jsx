@@ -43,24 +43,53 @@ async function getAuthHeader() {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [score, setScore] = useState(0);
+
+  const [score, setScore] = useState(() => {
+    const saved = sessionStorage.getItem("vouch_score");
+    return saved ? parseInt(saved) : 385;
+  });
+  const [outstandingBalance, setOutstandingBalance] = useState(() => {
+    const saved = sessionStorage.getItem("vouch_balance");
+    return saved ? parseInt(saved) : 0;
+  });
+  const [loanAccepted, setLoanAccepted] = useState(() => {
+    return sessionStorage.getItem("vouch_loan_accepted") === "true";
+  });
+
   const [transactions, setTransactions] = useState([]);
-  const [loanAccepted, setLoanAccepted] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [tierFlash, setTierFlash] = useState(false);
   const [user, setUser] = useState(null);
   const [traderId, setTraderId] = useState(null);
   const [isDemo, setIsDemo] = useState(false);
   const seenSenders = useRef(new Set());
-  const prevTierRef = useRef(1);
+  const prevTierRef = useRef(
+    getTier(parseInt(sessionStorage.getItem("vouch_score") || "385")).tier,
+  );
   const sseRef = useRef(null);
-  const currentScoreRef = useRef(0);
+  const currentScoreRef = useRef(score);
 
   const tierInfo = getTier(score);
 
-  useEffect(() => {
-    currentScoreRef.current = score;
-  }, [score]);
+  const updateScore = (val) => {
+    setScore((prev) => {
+      const next = typeof val === "function" ? val(prev) : val;
+      sessionStorage.setItem("vouch_score", String(next));
+      currentScoreRef.current = next;
+      return next;
+    });
+  };
+
+  const updateBalance = (amount) => {
+    setOutstandingBalance(amount);
+    sessionStorage.setItem("vouch_balance", String(amount));
+  };
+
+  const handleLoanAccepted = (amount) => {
+    setLoanAccepted(true);
+    sessionStorage.setItem("vouch_loan_accepted", "true");
+    updateBalance(amount);
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -82,7 +111,8 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (data?.data) {
-        setScore(data.data.currentScore || 0);
+        updateScore(data.data.currentScore || 0);
+        updateBalance(data.data.outstandingBalance || 0);
         setTraderId(data.data.traderId);
         connectSSE(token);
         fetchTransactions(token);
@@ -98,9 +128,9 @@ export default function DashboardPage() {
     es.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.currentScore !== undefined) {
-          setScore(data.currentScore);
-        }
+        if (data.currentScore !== undefined) updateScore(data.currentScore);
+        if (data.outstandingBalance !== undefined)
+          updateBalance(data.outstandingBalance);
       } catch {}
     };
     es.onerror = () => es.close();
@@ -176,7 +206,6 @@ export default function DashboardPage() {
   const simulate = useCallback(async () => {
     if (simulating) return;
     setSimulating(true);
-    setLoanAccepted(false);
     seenSenders.current.clear();
 
     if (traderId) {
@@ -200,7 +229,7 @@ export default function DashboardPage() {
             await new Promise((r) => setTimeout(r, 400));
             const tx = generateMockTransaction();
             setTransactions((prev) => [tx, ...prev].slice(0, 20));
-            setScore((prev) =>
+            updateScore((prev) =>
               i === steps - 1
                 ? targetScore
                 : Math.min(prev + increment, targetScore),
@@ -212,12 +241,11 @@ export default function DashboardPage() {
       } catch {}
     }
 
-    // Fall back to mock
     for (let i = 0; i < 8; i++) {
       await new Promise((r) => setTimeout(r, 400));
       const tx = generateMockTransaction();
       setTransactions((prev) => [tx, ...prev].slice(0, 20));
-      setScore((prev) => Math.min(1000, prev + tx.points));
+      updateScore((prev) => Math.min(1000, prev + tx.points));
     }
     setSimulating(false);
   }, [simulating, traderId]);
@@ -255,6 +283,7 @@ export default function DashboardPage() {
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
+                sessionStorage.clear();
                 navigate("/login");
               }}
               className="font-['Inter'] text-xs text-[#8A6B70] hover:text-[#A84551] transition-colors cursor-pointer border-none bg-transparent"
@@ -298,7 +327,7 @@ export default function DashboardPage() {
               tier={tierInfo.tier}
               tierLabel={tierInfo.label}
               accepted={loanAccepted}
-              onAccept={() => setLoanAccepted(true)}
+              onAccept={handleLoanAccepted}
               traderId={traderId}
             />
           )}
@@ -311,10 +340,11 @@ export default function DashboardPage() {
               transactions={transactions}
               userName={displayName}
               onSimulate={simulate}
+              outstandingBalance={outstandingBalance}
             />
             <TransactionFeed transactions={transactions} />
           </div>
-          {/* Quick links */}
+
           <div className="grid grid-cols-2 gap-4 mt-6">
             <motion.div
               whileHover={{ scale: 1.02 }}
@@ -348,7 +378,7 @@ export default function DashboardPage() {
               </p>
             </motion.div>
           </div>
-          {/* Mobile simulate button — visible only on small screens */}
+
           <div className="flex md:hidden justify-center mt-8">
             <motion.button
               whileHover={{ scale: 1.03 }}

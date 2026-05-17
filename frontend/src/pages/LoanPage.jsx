@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { supabase } from "../lib/supabase";
@@ -16,9 +16,14 @@ export default function LoanPage() {
   const traderId = state?.traderId || null;
   const [amount, setAmount] = useState(Math.floor(limit / 2));
   const [repaymentType, setRepaymentType] = useState("sweep");
+  const [sweepPercent, setSweepPercent] = useState(10);
   const [loading, setLoading] = useState(false);
   const [disbursed, setDisbursed] = useState(false);
   const [error, setError] = useState("");
+
+  const utilizationPercent = Math.round((amount / limit) * 100);
+  const isNear80 = utilizationPercent >= 70 && utilizationPercent < 80;
+  const isOver80 = utilizationPercent >= 80;
 
   const handleApply = async () => {
     setLoading(true);
@@ -38,6 +43,8 @@ export default function LoanPage() {
         });
         const data = await res.json();
         if (data?.data?.disbursementStatus === "completed") {
+          sessionStorage.setItem("vouch_balance", String(amount));
+          sessionStorage.setItem("vouch_loan_accepted", "true");
           setLoading(false);
           setDisbursed(true);
           return;
@@ -49,8 +56,10 @@ export default function LoanPage() {
         }
       }
     } catch {}
-    // Fall back to mock disbursement
+    // Mock fallback
     await new Promise((r) => setTimeout(r, 2000));
+    sessionStorage.setItem("vouch_balance", String(amount));
+    sessionStorage.setItem("vouch_loan_accepted", "true");
     setLoading(false);
     setDisbursed(true);
   };
@@ -78,7 +87,7 @@ export default function LoanPage() {
             <p className="font-['Inter'] text-xs text-[#8A6B70] mb-8">
               Repayment via{" "}
               {repaymentType === "sweep"
-                ? "10% auto-sweep on incoming payments"
+                ? `${sweepPercent}% auto-sweep on incoming payments`
                 : "bullet payment on the 30th"}
             </p>
             <motion.button
@@ -123,6 +132,7 @@ export default function LoanPage() {
         >
           <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#A84551]" />
 
+          {/* Credit limit display */}
           <div className="bg-[#FAFAFA] border border-[#E8DDE0] p-4 mb-6">
             <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] mb-1">
               Your Credit Limit
@@ -135,14 +145,28 @@ export default function LoanPage() {
             </p>
           </div>
 
+          {/* Amount selector */}
           <div className="mb-6">
             <div className="flex justify-between mb-2">
               <label className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70]">
                 Loan Amount
               </label>
-              <span className="font-['Bricolage_Grotesque'] font-bold text-lg text-[#A84551]">
-                ₦{amount.toLocaleString()}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-['Bricolage_Grotesque'] font-bold text-lg text-[#A84551]">
+                  ₦{amount.toLocaleString()}
+                </span>
+                <span
+                  className={`font-['Inter'] text-xs px-1.5 py-0.5 rounded ${
+                    isOver80
+                      ? "bg-red-100 text-red-600"
+                      : isNear80
+                        ? "bg-amber-100 text-amber-600"
+                        : "bg-[#F5F0F1] text-[#8A6B70]"
+                  }`}
+                >
+                  {utilizationPercent}%
+                </span>
+              </div>
             </div>
             <input
               type="range"
@@ -163,7 +187,45 @@ export default function LoanPage() {
             </div>
           </div>
 
-          <div className="mb-8">
+          {/* 80% warning */}
+          {isOver80 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 border border-red-200 p-3 mb-4 flex items-start gap-2"
+            >
+              <AlertTriangle
+                size={14}
+                className="text-red-500 flex-shrink-0 mt-0.5"
+              />
+              <p className="font-['Inter'] text-xs text-red-600">
+                <strong>Utilization Brake Warning:</strong> Borrowing over 80%
+                of your credit limit ({utilizationPercent}%) will trigger a -50
+                point penalty on your Vouch Score. We recommend staying below ₦
+                {Math.floor(limit * 0.79).toLocaleString()}.
+              </p>
+            </motion.div>
+          )}
+
+          {isNear80 && !isOver80 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-amber-50 border border-amber-200 p-3 mb-4 flex items-start gap-2"
+            >
+              <AlertTriangle
+                size={14}
+                className="text-amber-500 flex-shrink-0 mt-0.5"
+              />
+              <p className="font-['Inter'] text-xs text-amber-700">
+                You are approaching 80% utilization. Borrowing above this
+                threshold reduces your Vouch Score by 50 points.
+              </p>
+            </motion.div>
+          )}
+
+          {/* Repayment method */}
+          <div className="mb-6">
             <label className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] block mb-3">
               Repayment Method
             </label>
@@ -183,14 +245,56 @@ export default function LoanPage() {
                   onChange={() => setRepaymentType("sweep")}
                   className="mt-0.5 accent-[#A84551]"
                 />
-                <div>
+                <div className="flex-1">
                   <p className="font-['Inter'] text-sm font-semibold text-[#1A0A0D]">
-                    10% Auto-Sweep
+                    Auto-Sweep
                   </p>
-                  <p className="font-['Inter'] text-xs text-[#8A6B70]">
-                    10% of every incoming payment is automatically deducted
-                    until fully repaid. No cash-flow shock.
+                  <p className="font-['Inter'] text-xs text-[#8A6B70] mb-3">
+                    A percentage of every incoming payment is automatically
+                    deducted until fully repaid.
                   </p>
+                  {repaymentType === "sweep" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="flex justify-between mb-1">
+                        <span className="font-['Inter'] text-xs text-[#8A6B70]">
+                          Sweep rate
+                        </span>
+                        <span className="font-['Inter'] text-xs font-bold text-[#A84551]">
+                          {sweepPercent}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={5}
+                        max={30}
+                        step={5}
+                        value={sweepPercent}
+                        onChange={(e) =>
+                          setSweepPercent(Number(e.target.value))
+                        }
+                        className="w-full accent-[#A84551]"
+                      />
+                      <div className="flex justify-between mt-1">
+                        <span className="font-['Inter'] text-xs text-[#8A6B70]">
+                          5% (slower)
+                        </span>
+                        <span className="font-['Inter'] text-xs text-[#8A6B70]">
+                          30% (faster)
+                        </span>
+                      </div>
+                      <p className="font-['Inter'] text-xs text-[#8A6B70] mt-2">
+                        ≈ ₦
+                        {Math.floor(
+                          (amount * sweepPercent) / 100,
+                        ).toLocaleString()}{" "}
+                        deducted per ₦{amount.toLocaleString()} received
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
               </label>
 

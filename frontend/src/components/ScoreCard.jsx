@@ -10,7 +10,6 @@ function AnimatedNumber({ value }) {
     const from = prevValue.current;
     const to = value;
     prevValue.current = value;
-
     const controls = animate(from, to, {
       duration: 0.6,
       ease: "easeOut",
@@ -38,6 +37,7 @@ export default function ScoreCard({
   transactions = [],
   userName = "Trader",
   onSimulate,
+  outstandingBalance = 0,
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const tapCount = useRef(0);
@@ -70,6 +70,18 @@ export default function ScoreCard({
   const newCount = transactions.filter((tx) => !tx.isRepeat).length;
   const isNew = score === 0;
 
+  const availableCredit = Math.max(
+    0,
+    tierInfo_limit(tier) - outstandingBalance,
+  );
+
+  function tierInfo_limit(tier) {
+    if (tier.tier === 4) return 500000;
+    if (tier.tier === 3) return 150000;
+    if (tier.tier === 2) return 50000;
+    return 0;
+  }
+
   const handleScoreTap = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -78,7 +90,6 @@ export default function ScoreCard({
     tapTimer.current = setTimeout(() => {
       tapCount.current = 0;
     }, 500);
-
     if (tapCount.current >= 3) {
       tapCount.current = 0;
       if (onSimulate) onSimulate();
@@ -136,7 +147,6 @@ export default function ScoreCard({
         </div>
       ) : (
         <>
-          {/* Score area with triple-tap support */}
           <div onTouchStart={handleScoreTap} className="relative">
             <button
               onClick={() => setShowBreakdown((prev) => !prev)}
@@ -168,7 +178,6 @@ export default function ScoreCard({
             </button>
           </div>
 
-          {/* Score breakdown */}
           <motion.div
             initial={false}
             animate={{
@@ -182,37 +191,85 @@ export default function ScoreCard({
               <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] mb-3">
                 Score Breakdown
               </p>
-              <div className="flex justify-between">
-                <span className="font-['Inter'] text-xs text-[#4A4A4A]">
-                  Volume points
+              {/* Variable A */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="font-['Inter'] text-xs font-semibold text-[#1A0A0D]">
+                    Account Age
+                  </span>
+                  <p className="font-['Inter'] text-xs text-[#8A6B70]">
+                    +12 pts/active month (max 150)
+                  </p>
+                </div>
+                <span className="font-['Inter'] text-xs font-bold text-[#A84551]">
+                  +12
                 </span>
-                <span className="font-['Inter'] text-xs font-semibold text-[#A84551]">
+              </div>
+              <div className="h-px bg-[#E8DDE0]" />
+              {/* Variable B */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="font-['Inter'] text-xs font-semibold text-[#1A0A0D]">
+                    Daily Consistency
+                  </span>
+                  <p className="font-['Inter'] text-xs text-[#8A6B70]">
+                    +3 pts/unique sender/day, max 15/day (max 300)
+                  </p>
+                </div>
+                <span className="font-['Inter'] text-xs font-bold text-[#A84551]">
                   +
-                  {transactions.reduce(
-                    (s, tx) =>
-                      s +
-                      Math.min(Math.floor((tx.amount || 0) / 1000) * 2 + 5, 20),
-                    0,
+                  {Math.min(
+                    transactions.filter((tx) => !tx.isRepeat).length * 3,
+                    300,
                   )}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-['Inter'] text-xs text-[#4A4A4A]">
-                  Repeat senders ({repeatCount})
-                </span>
-                <span className="font-['Inter'] text-xs font-semibold text-green-600">
-                  Loyalty bonus
+              <div className="h-px bg-[#E8DDE0]" />
+              {/* Variable C */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="font-['Inter'] text-xs font-semibold text-[#1A0A0D]">
+                    Network Retention
+                  </span>
+                  <p className="font-['Inter'] text-xs text-[#8A6B70]">
+                    Repeat +13pts · New +7pts (max 250)
+                  </p>
+                </div>
+                <span className="font-['Inter'] text-xs font-bold text-[#A84551]">
+                  +{Math.min(repeatCount * 13 + newCount * 7, 250)}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-['Inter'] text-xs text-[#4A4A4A]">
-                  New senders ({newCount})
-                </span>
-                <span className="font-['Inter'] text-xs font-semibold text-blue-600">
-                  Growth signal
+              <div className="h-px bg-[#E8DDE0]" />
+              {/* Variable D */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="font-['Inter'] text-xs font-semibold text-[#1A0A0D]">
+                    Volume Scaling
+                  </span>
+                  <p className="font-['Inter'] text-xs text-[#8A6B70]">
+                    {transactions.reduce((s, tx) => s + tx.amount, 0) > 0
+                      ? `₦${transactions.reduce((s, tx) => s + tx.amount, 0).toLocaleString()} processed`
+                      : "No volume yet"}
+                  </p>
+                </div>
+                <span className="font-['Inter'] text-xs font-bold text-[#A84551]">
+                  +
+                  {Math.min(
+                    transactions.reduce(
+                      (s, tx) =>
+                        s +
+                        Math.min(
+                          Math.floor((tx.amount || 0) / 1000) * 2 + 5,
+                          20,
+                        ),
+                      0,
+                    ),
+                    300,
+                  )}
                 </span>
               </div>
-              <div className="flex justify-between border-t border-[#E8DDE0] pt-3">
+              <div className="h-px bg-[#E8DDE0]" />
+              <div className="flex justify-between pt-1">
                 <span className="font-['Inter'] text-xs font-semibold text-[#1A0A0D]">
                   Total Score
                 </span>
@@ -223,7 +280,6 @@ export default function ScoreCard({
             </div>
           </motion.div>
 
-          {/* Progress bar */}
           <div className="mb-2 flex justify-between">
             <span className="font-['Inter'] text-xs text-[#8A6B70]">
               {tier.next
@@ -242,15 +298,37 @@ export default function ScoreCard({
             />
           </div>
 
-          {/* Credit limit */}
+          {/* Credit limit + balance */}
           <div className="border-t border-[#E8DDE0] pt-6">
-            <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] mb-3">
-              Credit Limit
-            </p>
-            <p className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D]">
-              {currentTier.limit}
-            </p>
-            <p className="font-['Inter'] text-xs text-[#8A6B70] mt-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] mb-2">
+                  Credit Limit
+                </p>
+                <p className="font-['Bricolage_Grotesque'] font-bold text-2xl text-[#1A0A0D]">
+                  {currentTier.limit}
+                </p>
+              </div>
+              <div>
+                <p className="font-['Inter'] text-xs uppercase tracking-widest text-[#8A6B70] mb-2">
+                  Available Credit
+                </p>
+                <p className="font-['Bricolage_Grotesque'] font-bold text-2xl text-[#A84551]">
+                  ₦{availableCredit.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            {outstandingBalance > 0 && (
+              <div className="mt-3 bg-amber-50 border border-amber-200 px-3 py-2 flex justify-between items-center">
+                <span className="font-['Inter'] text-xs text-amber-700">
+                  Outstanding balance
+                </span>
+                <span className="font-['Inter'] text-xs font-bold text-amber-700">
+                  ₦{outstandingBalance.toLocaleString()}
+                </span>
+              </div>
+            )}
+            <p className="font-['Inter'] text-xs text-[#8A6B70] mt-2">
               {score < 400
                 ? `${400 - score} more points to unlock ₦50,000`
                 : "Active — apply for a loan below"}
