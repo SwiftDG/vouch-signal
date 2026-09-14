@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -14,27 +14,55 @@ import LoanPage from "./pages/LoanPage";
 import PageNotFound from "./pages/PageNotFound";
 import JobsPage from "./pages/JobsPage";
 import AjoPage from "./pages/AjoPage";
-import { supabase } from "./lib/supabase";
 import V2Page from "./pages/V2Page";
+import { supabase } from "./lib/supabase";
 
 function AuthCallback() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        subscription.unsubscribe();
-        navigate("/dashboard");
-      } else if (event === "SIGNED_OUT") {
-        subscription.unsubscribe();
-        navigate("/login");
-      }
-    });
+    let cancelled = false;
 
-    return () => subscription.unsubscribe();
-  }, []);
+    async function completeAuthentication() {
+      const tokenHash = searchParams.get("token_hash");
+      const type = searchParams.get("type");
+
+      if (tokenHash && type === "email") {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "email",
+        });
+
+        if (cancelled) return;
+
+        if (error) {
+          console.error("Email confirmation failed:", error);
+          navigate(`/login?error=${encodeURIComponent(error.message)}`, {
+            replace: true,
+          });
+          return;
+        }
+
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (cancelled) return;
+
+      navigate(session ? "/dashboard" : "/login", { replace: true });
+    }
+
+    completeAuthentication();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -55,10 +83,10 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/loan" element={<LoanPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="*" element={<PageNotFound />} />
         <Route path="/v2" element={<V2Page />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/ajo" element={<AjoPage />} />
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </BrowserRouter>
   );
