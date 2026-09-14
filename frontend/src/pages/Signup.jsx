@@ -20,10 +20,7 @@ export default function SignupPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          window.location.hostname === "localhost"
-            ? "http://localhost:5173/dashboard"
-            : "https://vouchsignal.vercel.app/dashboard",
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
   };
@@ -72,7 +69,7 @@ export default function SignupPage() {
             Vou<span className="text-[#A84551]">ch</span>
           </div>
           <p className="font-['Inter'] text-sm text-[#8A6B70]">
-            Build your financial identity — one transaction at a time
+            Build portable proof for your independent business
           </p>
         </motion.div>
 
@@ -96,7 +93,7 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p className="font-['Inter'] text-sm text-[#8A6B70] mb-8">
-            Start building your Market Reputation Score today
+            Create a profile customers and partners can understand
           </p>
 
           {error && (

@@ -15,10 +15,7 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          window.location.hostname === "localhost"
-            ? "http://localhost:5173/dashboard"
-            : "https://vouchsignal.vercel.app/dashboard",
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
   };
