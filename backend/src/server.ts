@@ -10,6 +10,9 @@ import webhookRouter from './routes/webhook.route';
 import lenderRouter from './routes/lender.route';
 import debugRouter from './routes/debug/debug.route';
 import loanRouter from './routes/loan.route';
+import profileRouter from './routes/profile.route';
+import confirmationRouter from './routes/confirmation.route';
+import publicProfileRouter from './routes/public-profile.route';
 
 const app = express();
 
@@ -62,6 +65,9 @@ app.use('/api/v1/traders', traderRouter);
 app.use('/api/v1/lenders', lenderRouter);
 app.use('/api/v1/debug', debugRouter);
 app.use('/api/v1/loans', loanRouter);
+app.use('/api/v1/profiles', profileRouter);
+app.use('/api/v1/confirmations', confirmationRouter);
+app.use('/api/v1/public/profiles', publicProfileRouter);
 
 // Global error handler
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction): void => {
