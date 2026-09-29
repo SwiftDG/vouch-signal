@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { supabase } from "../lib/supabase";
 
 export default function SignupPage() {
-  const navigate = useNavigate();
   const [form, setForm] = useState({
     fullName: "",
     businessName: "",
@@ -49,7 +47,6 @@ export default function SignupPage() {
     }
     setLoading(false);
     setConfirmed(true);
-    setLoading(false);
   };
 
   return (

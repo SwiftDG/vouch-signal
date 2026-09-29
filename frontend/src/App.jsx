@@ -10,12 +10,9 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SignupPage from "./pages/Signup";
-import LoanPage from "./pages/LoanPage";
 import PageNotFound from "./pages/PageNotFound";
-import JobsPage from "./pages/JobsPage";
-import AjoPage from "./pages/AjoPage";
-import V2Page from "./pages/V2Page";
 import PublicProfilePage from "./pages/PublicProfilePage";
+import ConfirmationPage from "./pages/ConfirmationPage";
 import { supabase } from "./lib/supabase";
 
 function AuthCallback() {
@@ -82,12 +79,13 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/loan" element={<LoanPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route
+          path="/example/amara-cakes"
+          element={<PublicProfilePage exampleMode />}
+        />
         <Route path="/p/:slug" element={<PublicProfilePage />} />
-        <Route path="/v2" element={<V2Page />} />
-        <Route path="/jobs" element={<JobsPage />} />
-        <Route path="/ajo" element={<AjoPage />} />
+        <Route path="/confirm/:token" element={<ConfirmationPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </BrowserRouter>

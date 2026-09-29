@@ -1,420 +1,289 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, Briefcase, Users } from "lucide-react";
-import ScoreCard from "../components/ScoreCard";
-import TransactionFeed from "../components/TransactionFeed";
-import LoanUnlock from "../components/LoanUnlock";
-import AnimatedBackground from "../components/AnimatedBackground";
+import { profileRequest } from "../lib/profileApi";
 
-const API =
-  import.meta.env.VITE_API_BASE_URL || "https://vouch-w5z1.onrender.com/api/v1";
-
-const MOCK_TRADERS = [
-  { name: "Chidi Okafor", amount: 3500 },
-  { name: "Fatima Bello", amount: 7200 },
-  { name: "Emeka Eze", amount: 1800 },
-  { name: "Aisha Musa", amount: 12000 },
-  { name: "Taiwo Adeleke", amount: 4500 },
-  { name: "Ngozi Obi", amount: 9800 },
-  { name: "Kunle Adeyemi", amount: 2300 },
-  { name: "Blessing Nwosu", amount: 6700 },
-];
-
-function getTier(score) {
-  if (score >= 800)
-    return { tier: 4, label: "Gold", limit: 500000, next: null };
-  if (score >= 600)
-    return { tier: 3, label: "Silver", limit: 150000, next: 800 };
-  if (score >= 400)
-    return { tier: 2, label: "Bronze", limit: 50000, next: 600 };
-  return { tier: 1, label: "Probation", limit: 0, next: 400 };
-}
-
-async function getAuthHeader() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.access_token
-    ? { Authorization: `Bearer ${session.access_token}` }
-    : {};
-}
+const inputClass =
+  "w-full rounded-xl border border-[#d9c7cb] bg-white px-4 py-3 text-[#24171a] focus-visible:outline-2 focus-visible:outline-[#a84551]";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-
-  const [score, setScore] = useState(() => {
-    const saved = sessionStorage.getItem("vouch_score");
-    return saved ? parseInt(saved) : 385;
+  const [state, setState] = useState({ kind: "loading" });
+  const [form, setForm] = useState({
+    name: "",
+    type: "vendor",
+    location: "",
+    description: "",
   });
-  const [outstandingBalance, setOutstandingBalance] = useState(() => {
-    const saved = sessionStorage.getItem("vouch_balance");
-    return saved ? parseInt(saved) : 0;
-  });
-  const [loanAccepted, setLoanAccepted] = useState(() => {
-    return sessionStorage.getItem("vouch_loan_accepted") === "true";
-  });
-
-  const [transactions, setTransactions] = useState([]);
-  const [simulating, setSimulating] = useState(false);
-  const [tierFlash, setTierFlash] = useState(false);
-  const [user, setUser] = useState(null);
-  const [traderId, setTraderId] = useState(null);
-  const [isDemo, setIsDemo] = useState(false);
-  const seenSenders = useRef(new Set());
-  const prevTierRef = useRef(
-    getTier(parseInt(sessionStorage.getItem("vouch_score") || "385")).tier,
-  );
-  const sseRef = useRef(null);
-  const currentScoreRef = useRef(score);
-
-  const tierInfo = getTier(score);
-
-  const updateScore = (val) => {
-    setScore((prev) => {
-      const next = typeof val === "function" ? val(prev) : val;
-      sessionStorage.setItem("vouch_score", String(next));
-      currentScoreRef.current = next;
-      return next;
-    });
-  };
-
-  const updateBalance = (amount) => {
-    setOutstandingBalance(amount);
-    sessionStorage.setItem("vouch_balance", String(amount));
-  };
-
-  const handleLoanAccepted = (amount) => {
-    setLoanAccepted(true);
-    sessionStorage.setItem("vouch_loan_accepted", "true");
-    updateBalance(amount);
-  };
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        setIsDemo(false);
-        fetchTraderData(session.access_token);
-      } else {
-        setIsDemo(true);
-        setUser(null);
-      }
-    });
-  }, []);
+    let cancelled = false;
 
-  const fetchTraderData = async (token) => {
-    try {
-      const res = await fetch(`${API}/traders/score`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data?.data) {
-        updateScore(data.data.currentScore || 0);
-        updateBalance(data.data.outstandingBalance || 0);
-        setTraderId(data.data.traderId);
-        connectSSE(token);
-        fetchTransactions(token);
-      }
-    } catch {
-      // Backend unavailable — stay on mock
-    }
-  };
-
-  const connectSSE = (token) => {
-    if (sseRef.current) sseRef.current.close();
-    const es = new EventSource(`${API}/traders/score/stream`);
-    es.onmessage = (e) => {
+    async function load() {
       try {
-        const data = JSON.parse(e.data);
-        if (data.currentScore !== undefined) updateScore(data.currentScore);
-        if (data.outstandingBalance !== undefined)
-          updateBalance(data.outstandingBalance);
-      } catch {}
-    };
-    es.onerror = () => es.close();
-    sseRef.current = es;
-  };
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-  const fetchTransactions = async (token) => {
-    try {
-      const headers = token
-        ? { Authorization: `Bearer ${token}` }
-        : await getAuthHeader();
-      const res = await fetch(`${API}/traders/transactions`, { headers });
-      const data = await res.json();
-      if (data?.data?.transactions) {
-        const mapped = data.data.transactions.map((tx) => ({
-          id: tx.id,
-          sender: tx.senderAccount || "Unknown",
-          amount: tx.amount,
-          points: 0,
-          isRepeat: false,
-          timestamp: new Date(tx.timestamp),
-          status: "verified",
-        }));
-        setTransactions(mapped);
-      }
-    } catch {}
-  };
+        if (cancelled) return;
+        if (error) throw error;
 
-  useEffect(() => {
-    return () => {
-      if (sseRef.current) sseRef.current.close();
-    };
-  }, []);
-
-  const displayName =
-    user?.user_metadata?.full_name || user?.email || "Mama Ngozi";
-  const initials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  function generateMockTransaction() {
-    const sender =
-      MOCK_TRADERS[Math.floor(Math.random() * MOCK_TRADERS.length)];
-    const isRepeat = seenSenders.current.has(sender.name);
-    seenSenders.current.add(sender.name);
-    const volumePoints = Math.min(Math.floor(sender.amount / 1000) * 2 + 5, 20);
-    const consistencyPoints = Math.floor(Math.random() * 3) * 4 + 3;
-    const diversityPoints = Math.min(seenSenders.current.size * 2, 10);
-    const points = volumePoints + consistencyPoints + diversityPoints;
-    return {
-      id: Date.now() + Math.random(),
-      sender: sender.name,
-      amount: sender.amount + Math.floor(Math.random() * 1000),
-      points,
-      isRepeat,
-      timestamp: new Date(),
-      status: "verified",
-    };
-  }
-
-  useEffect(() => {
-    const currentTier = getTier(score).tier;
-    if (currentTier > prevTierRef.current) {
-      prevTierRef.current = currentTier;
-      setTierFlash(true);
-      setTimeout(() => setTierFlash(false), 3000);
-    }
-  }, [score]);
-
-  const simulate = useCallback(async () => {
-    if (simulating) return;
-    setSimulating(true);
-    seenSenders.current.clear();
-
-    if (traderId) {
-      try {
-        const headers = await getAuthHeader();
-        const res = await fetch(`${API}/debug/simulate-history`, {
-          method: "POST",
-          headers: { ...headers, "Content-Type": "application/json" },
-          body: JSON.stringify({ traderId }),
-        });
-        const data = await res.json();
-        if (data?.trader?.currentScore) {
-          const targetScore = data.trader.currentScore;
-          const currentScore = currentScoreRef.current;
-          const steps = 8;
-          const increment = Math.max(
-            Math.floor((targetScore - currentScore) / steps),
-            1,
-          );
-          for (let i = 0; i < steps; i++) {
-            await new Promise((r) => setTimeout(r, 400));
-            const tx = generateMockTransaction();
-            setTransactions((prev) => [tx, ...prev].slice(0, 20));
-            updateScore((prev) =>
-              i === steps - 1
-                ? targetScore
-                : Math.min(prev + increment, targetScore),
-            );
-          }
-          setSimulating(false);
+        if (!session) {
+          setState({ kind: "signed-out" });
           return;
         }
-      } catch {}
+
+        try {
+          const profile = await profileRequest("/profiles/me", {
+            authenticated: true,
+          });
+          if (!cancelled) setState({ kind: "profile", profile });
+        } catch (requestError) {
+          if (!cancelled) {
+            setState(
+              requestError.status === 404
+                ? { kind: "empty" }
+                : { kind: "error", message: requestError.message },
+            );
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setState({
+            kind: "error",
+            message: "We could not check your account. Please try again.",
+          });
+        }
+      }
     }
 
-    for (let i = 0; i < 8; i++) {
-      await new Promise((r) => setTimeout(r, 400));
-      const tx = generateMockTransaction();
-      setTransactions((prev) => [tx, ...prev].slice(0, 20));
-      updateScore((prev) => Math.min(1000, prev + tx.points));
-    }
-    setSimulating(false);
-  }, [simulating, traderId]);
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.shiftKey && e.key === "S") simulate();
+    load();
+    return () => {
+      cancelled = true;
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [simulate]);
+  }, []);
+
+  async function createProfile(event) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+
+    try {
+      const profile = await profileRequest("/profiles", {
+        method: "POST",
+        body: form,
+        authenticated: true,
+      });
+      setState({ kind: "profile", profile });
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate("/");
+  }
 
   return (
-    <div className="relative min-h-screen bg-white">
-      <AnimatedBackground />
-      <div className="relative z-10">
-        <nav className="bg-white/80 backdrop-blur-md border-b border-[#E8DDE0] px-6 md:px-12 py-4 flex items-center justify-between">
-          <div
-            onClick={() => (window.location.href = "/")}
-            className="font-['Bricolage_Grotesque'] font-bold text-xl text-[#1A0A0D] cursor-pointer"
+    <div className="min-h-screen bg-[#f8f3f1] text-[#24171a]">
+      <header className="border-b border-[#e5d8d8] bg-white px-5 py-5">
+        <nav
+          className="mx-auto flex max-w-5xl items-center justify-between gap-4"
+          aria-label="Account navigation"
+        >
+          <Link
+            to="/"
+            className="font-['Bricolage_Grotesque'] text-2xl font-bold"
           >
-            Vou<span className="text-[#A84551]">ch</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#A84551] flex items-center justify-center">
-                <span className="font-['Inter'] text-xs text-white font-bold">
-                  {initials}
-                </span>
-              </div>
-              <span className="font-['Inter'] text-sm text-[#1A0A0D] hidden md:block">
-                {displayName}
-              </span>
-            </div>
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut();
-                sessionStorage.clear();
-                navigate("/login");
-              }}
-              className="font-['Inter'] text-xs text-[#8A6B70] hover:text-[#A84551] transition-colors cursor-pointer border-none bg-transparent"
-            >
-              Sign out
-            </button>
-          </div>
-        </nav>
-
-        <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
-          <div className="mb-8">
-            <h1 className="font-['Bricolage_Grotesque'] font-bold text-3xl text-[#1A0A0D] mb-1">
-              Good morning, {displayName} 👋
-            </h1>
-            <p className="font-['Inter'] text-sm text-[#8A6B70]">
-              {isDemo ? "Demo Mode · " : ""}Squad Virtual Account Active
-            </p>
-          </div>
-
-          <AnimatePresence>
-            {tierFlash && (
-              <motion.div
-                initial={{ opacity: 0, y: -16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.4 }}
-                className="bg-[#A84551] text-white px-6 py-3 mb-4 flex items-center gap-3"
-              >
-                <TrendingUp size={18} />
-                <span className="font-['Inter'] font-semibold text-sm">
-                  Tier upgrade! You've reached {tierInfo.label} — new credit
-                  limit unlocked.
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {tierInfo.limit > 0 && (
-            <LoanUnlock
-              limit={tierInfo.limit}
-              tier={tierInfo.tier}
-              tierLabel={tierInfo.label}
-              accepted={loanAccepted}
-              onAccept={handleLoanAccepted}
-              traderId={traderId}
-            />
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <ScoreCard
-              score={score}
-              tier={tierInfo}
-              simulating={simulating}
-              transactions={transactions}
-              userName={displayName}
-              onSimulate={simulate}
-              outstandingBalance={outstandingBalance}
-            />
-            <TransactionFeed transactions={transactions} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mt-6">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate("/jobs")}
-              className="relative bg-white border border-[#E8DDE0] p-6 cursor-pointer hover:border-[#A84551] transition-colors"
-            >
-              <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#A84551]" />
-              <Briefcase size={24} className="text-[#A84551] mb-3" />
-              <h3 className="font-['Bricolage_Grotesque'] font-bold text-base text-[#1A0A0D] mb-1">
-                Job Directory
-              </h3>
-              <p className="font-['Inter'] text-xs text-[#8A6B70]">
-                Find micro-jobs with verified employers
-              </p>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate("/ajo")}
-              className="relative bg-white border border-[#E8DDE0] p-6 cursor-pointer hover:border-[#A84551] transition-colors"
-            >
-              <div className="absolute top-0 left-0 w-1/2 h-0.5 bg-[#A84551]" />
-              <Users size={24} className="text-[#A84551] mb-3" />
-              <h3 className="font-['Bricolage_Grotesque'] font-bold text-base text-[#1A0A0D] mb-1">
-                Ajo Circles
-              </h3>
-              <p className="font-['Inter'] text-xs text-[#8A6B70]">
-                Save together with your community
-              </p>
-            </motion.div>
-          </div>
-
-          <div className="flex md:hidden justify-center mt-8">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={simulate}
-              disabled={simulating}
-              className="flex items-center gap-2 px-6 py-3 bg-[#A84551] text-white font-['Inter'] font-semibold text-sm border-none cursor-pointer disabled:opacity-50"
-            >
-              {simulating ? (
-                <>
-                  <motion.div
-                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 0.8,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  />
-                  Simulating...
-                </>
-              ) : (
-                "Simulate Transactions"
-              )}
-            </motion.button>
-          </div>
-        </div>
-
-        <div className="fixed bottom-6 right-6">
+            Vou<span className="text-[#a84551]">ch</span>
+          </Link>
           <button
-            onClick={simulate}
-            disabled={simulating}
-            className="w-3 h-3 rounded-full bg-[#A84551] opacity-0 hover:opacity-30 transition-opacity cursor-pointer border-none"
-          />
-        </div>
-      </div>
+            onClick={signOut}
+            className="text-sm font-medium text-[#7b3c47] hover:underline"
+          >
+            Sign out
+          </button>
+        </nav>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-5 py-10 sm:py-16">
+        {state.kind === "loading" && (
+          <div
+            role="status"
+            aria-label="Loading account"
+            className="animate-pulse space-y-5"
+          >
+            <div className="h-10 w-60 rounded bg-[#e8d8d7]" />
+            <div className="h-40 rounded-2xl bg-[#eee1df]" />
+            <span className="sr-only">Loading account</span>
+          </div>
+        )}
+
+        {state.kind === "signed-out" && (
+          <section className="max-w-xl">
+            <h1 className="text-3xl font-semibold">
+              Sign in to manage your profile
+            </h1>
+            <p className="mt-3 text-[#6a565a]">
+              Your business records are tied to your account.
+            </p>
+            <Link
+              className="mt-6 inline-block rounded-full bg-[#a84551] px-6 py-3 text-white"
+              to="/login"
+            >
+              Sign in
+            </Link>
+          </section>
+        )}
+
+        {state.kind === "error" && (
+          <section
+            role="alert"
+            className="max-w-xl rounded-2xl border border-[#dec9ca] bg-white p-7"
+          >
+            <h1 className="text-2xl font-semibold">Profile unavailable</h1>
+            <p className="mt-3 text-[#6a565a]">{state.message}</p>
+            <p className="mt-3 text-sm text-[#6a565a]">
+              No sample data is shown in your account.
+            </p>
+            <button
+              className="mt-6 rounded-full border border-[#a84551] px-5 py-2 text-[#8b3541]"
+              onClick={() => window.location.reload()}
+            >
+              Try again
+            </button>
+          </section>
+        )}
+
+        {state.kind === "empty" && (
+          <section className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
+              Your first step
+            </p>
+            <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
+              Introduce your business
+            </h1>
+            <p className="mt-3 text-[#6a565a]">
+              Only publish details you are comfortable sharing. A profile
+              alone does not verify your identity or work.
+            </p>
+
+            <form
+              onSubmit={createProfile}
+              className="mt-8 grid gap-5 rounded-2xl border border-[#e5d8d8] bg-white p-6 sm:p-8"
+            >
+              <label className="grid gap-2 text-sm font-medium">
+                Business name
+                <input
+                  className={inputClass}
+                  required
+                  maxLength={100}
+                  value={form.name}
+                  onChange={(event) =>
+                    setForm({ ...form, name: event.target.value })
+                  }
+                />
+              </label>
+
+              <label className="grid gap-2 text-sm font-medium">
+                I work as
+                <select
+                  className={inputClass}
+                  value={form.type}
+                  onChange={(event) =>
+                    setForm({ ...form, type: event.target.value })
+                  }
+                >
+                  <option value="vendor">Vendor</option>
+                  <option value="freelancer">Freelancer</option>
+                </select>
+              </label>
+
+              <label className="grid gap-2 text-sm font-medium">
+                Location (optional)
+                <input
+                  className={inputClass}
+                  maxLength={100}
+                  value={form.location}
+                  onChange={(event) =>
+                    setForm({ ...form, location: event.target.value })
+                  }
+                />
+              </label>
+
+              <label className="grid gap-2 text-sm font-medium">
+                What do you do?
+                <textarea
+                  className={inputClass}
+                  required
+                  rows={3}
+                  maxLength={500}
+                  value={form.description}
+                  onChange={(event) =>
+                    setForm({ ...form, description: event.target.value })
+                  }
+                />
+              </label>
+
+              {message && (
+                <p role="alert" className="text-sm text-[#9c3545]">
+                  {message}
+                </p>
+              )}
+              <button
+                disabled={busy}
+                className="w-fit rounded-full bg-[#a84551] px-6 py-3 font-semibold text-white disabled:opacity-60"
+              >
+                {busy ? "Creating…" : "Create profile"}
+              </button>
+            </form>
+          </section>
+        )}
+
+        {state.kind === "profile" && (
+          <section>
+            <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
+              Your profile
+            </p>
+            <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
+              {state.profile.name}
+            </h1>
+            <p className="mt-3 max-w-2xl text-[#6a565a]">
+              {state.profile.description}
+            </p>
+
+            <div className="mt-8 rounded-2xl border border-[#e5d8d8] bg-white p-6">
+              <h2 className="text-xl font-semibold">
+                Work and customer confirmations
+              </h2>
+              <p className="mt-3 text-[#6a565a]">
+                Record and confirmation actions will become available after
+                the profile API supports them.
+              </p>
+              <p className="mt-3 text-sm text-[#6a565a]">
+                {state.profile.records?.length
+                  ? `${state.profile.records.length} record(s) returned by the service. View your public profile to see published records.`
+                  : "No records returned by the service."}
+              </p>
+            </div>
+
+            {state.profile.slug && (
+              <Link
+                className="mt-7 inline-block rounded-full bg-[#a84551] px-6 py-3 text-white"
+                to={`/p/${encodeURIComponent(state.profile.slug)}`}
+              >
+                View public profile
+              </Link>
+            )}
+          </section>
+        )}
+      </main>
     </div>
   );
 }

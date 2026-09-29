@@ -67,9 +67,7 @@ export default function PageNotFound() {
             variants={fadeUp}
             className="font-['Inter'] text-base md:text-lg text-[#4A4A4A] leading-relaxed max-w-md mb-10"
           >
-            Unlike Nigeria's hard-working unbanked merchants, this page doesn't
-            have a record of history to vouch for it. Let's get you back on
-            track.
+            This page is not part of the current Vouch experience. Return home to explore the profile concept.
           </motion.p>
 
           {/* Action Navigation Matrix */}
