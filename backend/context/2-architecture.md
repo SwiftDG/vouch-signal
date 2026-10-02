@@ -72,6 +72,6 @@ None required for V1. No AI risk scoring or fraud detection unless a specific, v
 2. The public endpoint exposes only deliberately public information: no email, no Supabase user ID, no confirmation token, no private unconfirmed evidence.
 3. Confirming a request changes evidence from `SELF_REPORTED` to `CUSTOMER_CONFIRMED`, and only that.
 4. Migrations are additive only. Never delete or destroy old production data.
-5. No BVN, NIN, bank details, loan logic, Squad calls, or secrets, anywhere in backend code.
-6. Legacy loan, score, Ajo, Jobs, Squad, and demo code still exists but must never drive the new Trust Profile journey.
+5. No payment processing, financial products, banking integrations, financial scoring, or secrets in the Trust Profile API.
+6. The backend serves only profile, evidence, and customer-confirmation workflows.
 7. No direct work on `main`. Open a PR into `rebuild/trust-profile-mvp`; do not merge it.

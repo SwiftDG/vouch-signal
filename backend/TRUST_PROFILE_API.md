@@ -95,22 +95,18 @@ export const requireSupabaseAuth = (req: Request, res: Response, next: NextFunct
 ```
 
 ### Usage pattern
-The repo’s existing authenticated route pattern is:
-
-- `backend/src/routes/loan.route.ts`
+The authenticated route pattern attaches the existing JWT middleware before the controller:
 
 ```ts
 import { Router } from 'express';
-import { acceptLoan } from '../controllers/loan.controller';
 import { requireSupabaseAuth } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-// POST /api/v1/loans/accept
-router.post('/accept', requireSupabaseAuth, acceptLoan);
+router.get('/me', requireSupabaseAuth, getMyProfile);
 ```
 
-This confirms the expected pattern for owner-only endpoints in the Trust Profile API: attach the existing Supabase auth middleware directly to the route before the controller, and then validate ownership against `req.user.id`.
+Owner-only Trust Profile endpoints attach the Supabase auth middleware before the controller and validate ownership against `req.user.id`.
 
 ### Conclusion
 Unit 1 is complete in the repo sense: the branch exists, the middleware is confirmed, and the request-user attachment pattern has been documented and is ready to reuse for the Trust Profile API work.

@@ -1,6 +1,6 @@
 # Project Overview
 
-Vouch is trust infrastructure for independent online businesses. Vendors and freelancers turn completed work and customer confirmations into a portable, shareable profile that a new customer, collaborator, supplier, opportunity provider, or future partner can check before deciding whether to trust them.
+Vouch helps independent businesses and skilled workers present completed work and customer confirmations in a portable, shareable profile.
 
 North star: give a vendor or freelancer one credible Vouch link they can share before someone decides whether to trust them.
 
@@ -16,8 +16,7 @@ North star: give a vendor or freelancer one credible Vouch link they can share b
 5. Share: the business shares `/p/:slug` as an explainable public profile.
 
 ## What Vouch Must NOT Claim in V1
-* Automatic loans, credit approval, financial underwriting, or insurance access.
-* Live banking partnerships, real-money Ajo, Squad transfers, or verified nationwide credit data.
+* Payments, transfers, loans, credit approval, financial underwriting, or insurance access.
 * AI risk scoring or fraud detection, unless a specific visible, tested, and explainable rule exists.
 * That fictional sample profiles are real customers.
 
@@ -37,8 +36,8 @@ North star: give a vendor or freelancer one credible Vouch link they can share b
 * A real end to end test has been recorded.
 
 ## Out of Scope for V1
-* Any loan, credit, insurance, or underwriting feature.
-* Live banking partnerships, real money Ajo, or Squad transfers.
+* Payment processing, transfers, loans, credit, insurance, or underwriting.
+* Ajo or other money-handling services.
 * AI risk scoring or fraud detection (unless later backed by a specific, visible, tested, explainable rule).
 * Verified nationwide credit data.
 

@@ -8,7 +8,7 @@
 
 ## Scoping Rules
 * No speculative changes outside `backend/trust-profile-api`.
-* Do not touch, refactor, or "clean up" legacy loan, score, Ajo, Jobs, Squad, or demo code. It must stay isolated, not deleted, until the new flow supersedes it.
+* The active backend is Trust Profile only. Do not add payment, banking, lending, Ajo, transaction-scoring, or unrelated demo functionality.
 * No risky broad deletion before integration.
 
 ## Splitting Work
