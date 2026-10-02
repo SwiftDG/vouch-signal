@@ -8,10 +8,9 @@
 | Styling | Tailwind CSS v4 | Utility-first styling |
 | Animation | Framer Motion | Scroll reveals, transitions, counters |
 | Routing | React Router DOM | Client-side page routing |
-| Backend | Node.js / Express (Emmanuel) | API endpoints, Squad integration, scoring |
-| AI Scoring | Claude API | Transaction pattern analysis, score generation |
-| Payments | Squad API | Virtual Accounts, Webhooks, Transfer, Recurring |
-| Database | PostgreSQL (Emmanuel) | Trader profiles, transaction history, scores |
+| Backend | Node.js / Express / TypeScript | Profile, evidence, and confirmation endpoints |
+| Authentication | Supabase Auth | Email/password and Google sign-in; JWT for owner APIs |
+| Database | Supabase PostgreSQL via Prisma | Business profiles, evidence, confirmation requests |
 | Deployment | Vercel (frontend) + Render (backend) | Production hosting |
 
 ## Repository Structure
@@ -28,9 +27,7 @@ vouch-signal/
 │   │   │   ├── Stats.jsx
 │   │   │   ├── Problem.jsx
 │   │   │   ├── HowItWorks.jsx
-│   │   │   ├── ScoreDisplay.jsx
-│   │   │   ├── SquadAPIs.jsx
-│   │   │   └── CTA.jsx
+│   │   │   └── ...
 │   │   ├── pages/               ← Route-level page components
 │   │   │   └── HomePage.jsx
 │   │   ├── App.jsx              ← Router setup
@@ -50,42 +47,35 @@ vouch-signal/
 | `frontend/src/components/` | David | All reusable UI components. No API calls inside components — data comes via props or context |
 | `frontend/src/pages/` | David | Route-level components. HomePage imports and composes all section components |
 | `frontend/src/App.jsx` | David | React Router setup only. No business logic |
-| `backend/` | Emmanuel | All Squad API calls, scoring logic, database, webhooks |
+| `backend/` | Backend | Profile, evidence, confirmation APIs and persistence |
 
 ## Data Flow
 
 ```
-Customer pays trader
+Owner signs in with Supabase Auth
         ↓
-Squad Payment Gateway
+Frontend sends Supabase JWT to Express API
         ↓
-Squad Webhook → Backend endpoint
+Owner creates profile and completed-work records
         ↓
-Scoring engine (Claude API) recalculates score
+Customer confirms one record through an expiring link
         ↓
-Updated score stored in PostgreSQL
-        ↓
-Frontend polls or receives score update
-        ↓
-Dashboard re-renders with new score
+Public profile displays deliberately public fields and confirmed work
 ```
 
-## Squad API Integration Points
+## API Boundaries
 
-| API | Used By | Purpose |
-|-----|---------|---------|
-| Virtual Accounts | Backend | Create one per trader on registration |
-| Payment Gateway | Backend | Process customer payments |
-| Webhooks | Backend | Receive real-time transaction events |
-| Transfer API | Backend | Disburse loans to trader accounts |
-| Recurring Payments | Backend | Automate loan repayments and Ajo contributions |
+| API | Access | Purpose |
+|-----|--------|---------|
+| `/api/v1/profiles/*` | Supabase JWT | Owner profile and evidence actions |
+| `/api/v1/confirmations/:token` | Public token | Read and confirm one work record |
+| `/api/v1/public/profiles/:slug` | Public slug | Read deliberately public profile data |
 
 ## Invariants — Rules This Codebase Must Never Violate
 
-1. **No Squad API calls from the frontend** — all payment operations go through the backend
-2. **No API keys in frontend code** — environment variables are backend only
-3. **Components receive data via props** — no direct database or API calls inside component files
-4. **One component per file** — no multiple exports from a single component file
-5. **Tailwind only for styling** — no inline styles, no separate CSS files per component
-6. **Framer Motion for all animations** — no CSS keyframes or transition hacks
-7. **HomePage.jsx composes sections** — it imports components, it does not define them
+1. No payment, lending, or financial-product integrations.
+2. Never put secrets or Supabase service-role keys in frontend code.
+3. Owner APIs derive identity from the verified JWT, never a caller-supplied owner ID.
+4. Public endpoints use explicit response projections and omit private evidence.
+5. Self-reported evidence is never presented as customer-confirmed.
+6. Confirmation tokens are unguessable, unique, expiring, and single-use.

@@ -1,0 +1,21 @@
+# Vouch — Backend Agent Rules
+
+Read `context/1-project-overview.md` through `context/7-units.md` before writing any code. Full detail lives there; this file is the always-loaded summary.
+
+## Non-negotiable
+* No payment processing, banking, lending, financial scoring, or secrets in backend code.
+* No direct work on `main`. Work on `backend/trust-profile-api`. Open a PR into `rebuild/trust-profile-mvp`. Never merge it yourself.
+* Migrations are additive only. Never modify an applied migration or delete production data.
+* Every owner endpoint uses the existing Supabase JWT middleware and validates ownership.
+* The public profile endpoint and confirmation endpoints expose only deliberately public data: no email, no Supabase user ID, no confirmation token, no unconfirmed private evidence.
+* Use only the approved status vocabulary: SELF_REPORTED / CUSTOMER_CONFIRMED, "self-reported," "customer-confirmed." Never imply a credit score, verified identity, or a guarantee of performance. See `context/3-ui-context.md`.
+* Keep the active backend limited to profiles, evidence, and customer confirmations.
+
+## Working style
+* One atomic unit at a time, from `context/7-units.md`, in order. Do not skip ahead or batch units.
+* If a requirement conflicts with the context files or a detail is missing, stop and ask. Do not assume.
+* Document every new endpoint, model, or migration in `backend/TRUST_PROFILE_API.md` as you build it.
+* Before every push: `git diff --check`, `git status --short`, and the relevant build/test.
+
+## Target
+Vouch v0.1, October 1, 2026. See `context/1-project-overview.md` for the full release gate.
