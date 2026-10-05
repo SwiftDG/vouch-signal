@@ -7,3 +7,16 @@
 html {
   scroll-behavior: smooth;
 }
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #080b10;
+  font-family: "Inter", system-ui, sans-serif;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+}

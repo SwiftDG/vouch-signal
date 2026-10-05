@@ -15,10 +15,7 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          window.location.hostname === "localhost"
-            ? "http://localhost:5173/dashboard"
-            : "https://vouchsignal.vercel.app/dashboard",
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
   };
@@ -47,42 +44,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
       <AnimatedBackground />
 
-      <motion.div
-        className="absolute w-96 h-96 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(168,69,81,0.12) 0%, transparent 70%)",
-          top: -80,
-          right: -80,
-        }}
-        animate={{
-          x: [0, -20, 10, 0],
-          y: [0, 20, -10, 0],
-          scale: [1, 1.1, 0.95, 1],
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-64 h-64 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(196,96,110,0.1) 0%, transparent 70%)",
-          bottom: -40,
-          left: -40,
-        }}
-        animate={{
-          x: [0, 20, -10, 0],
-          y: [0, -20, 10, 0],
-          scale: [1, 0.95, 1.1, 1],
-        }}
-        transition={{
-          duration: 10,
-          delay: 2,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-
       <div className="relative z-10 w-full max-w-md">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -94,7 +55,7 @@ export default function LoginPage() {
             Vou<span className="text-[#A84551]">ch</span>
           </div>
           <p className="font-['Inter'] text-sm text-[#8A6B70]">
-            Trust infrastructure for Nigeria's informal economy
+            Your business profile, in one place
           </p>
         </motion.div>
 
@@ -185,20 +146,6 @@ export default function LoginPage() {
             <span className="font-['Inter'] text-xs text-[#8A6B70]">or</span>
             <div className="flex-1 h-px bg-[#E8DDE0]" />
           </div>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/dashboard")}
-            className="w-full py-4 bg-[#1A0A0D] text-white font-['Inter'] font-bold text-sm border-none cursor-pointer transition-colors flex items-center justify-center gap-3"
-          >
-            <span className="text-lg">🛍️</span>
-            Log in as Mama Ngozi (Demo)
-          </motion.button>
-
-          <p className="font-['Inter'] text-xs text-[#8A6B70] text-center mt-4">
-            Demo mode: no OTP required. For live pitch use only.
-          </p>
 
           <p className="font-['Inter'] text-xs text-[#8A6B70] text-center mt-6">
             Don't have an account?{" "}
