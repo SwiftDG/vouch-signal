@@ -6,17 +6,66 @@ import { profileRequest } from "../lib/profileApi";
 const inputClass =
   "w-full rounded-xl border border-[#d9c7cb] bg-white px-4 py-3 text-[#24171a] focus-visible:outline-2 focus-visible:outline-[#a84551]";
 
+const emptyProfile = {
+  businessName: "",
+  businessType: "VENDOR",
+  publicSlug: "",
+  category: "",
+  bio: "",
+  location: "",
+  contactUrl: "",
+};
+
+const emptyEvidence = {
+  title: "",
+  evidenceType: "SERVICE",
+  completedDate: new Date().toISOString().slice(0, 10),
+  description: "",
+  customerName: "",
+};
+
+function slugify(value) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="grid gap-2 text-sm font-medium">
+      {label}
+      {children}
+    </label>
+  );
+}
+
+function Status({ value }) {
+  const confirmed = value === "CUSTOMER_CONFIRMED";
+
+  return (
+    <span
+      className={
+        confirmed
+          ? "text-xs font-medium text-[#477243]"
+          : "text-xs font-medium text-[#8b3541]"
+      }
+    >
+      {confirmed ? "Customer confirmed" : "Self-reported"}
+    </span>
+  );
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [state, setState] = useState({ kind: "loading" });
-  const [form, setForm] = useState({
-    name: "",
-    type: "vendor",
-    location: "",
-    description: "",
-  });
+  const [profileForm, setProfileForm] = useState(emptyProfile);
+  const [evidence, setEvidence] = useState([]);
+  const [evidenceForm, setEvidenceForm] = useState(emptyEvidence);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [confirmationLink, setConfirmationLink] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +79,6 @@ export default function DashboardPage() {
 
         if (cancelled) return;
         if (error) throw error;
-
         if (!session) {
           setState({ kind: "signed-out" });
           return;
@@ -40,13 +88,22 @@ export default function DashboardPage() {
           const profile = await profileRequest("/profiles/me", {
             authenticated: true,
           });
-          if (!cancelled) setState({ kind: "profile", profile });
+
+          const records = await profileRequest("/profiles/me/evidence", {
+            authenticated: true,
+          });
+
+          if (!cancelled) {
+            setProfileForm({ ...emptyProfile, ...profile });
+            setEvidence(records);
+            setState({ kind: "profile", profile });
+          }
         } catch (requestError) {
           if (!cancelled) {
             setState(
               requestError.status === 404
                 ? { kind: "empty" }
-                : { kind: "error", message: requestError.message },
+                : { kind: "error", message: requestError.message }
             );
           }
         }
@@ -61,23 +118,51 @@ export default function DashboardPage() {
     }
 
     load();
+
     return () => {
       cancelled = true;
     };
   }, []);
 
-  async function createProfile(event) {
+  function updateProfileField(event) {
+    const { name, value } = event.target;
+
+    setProfileForm((current) => {
+      const next = { ...current, [name]: value };
+
+      if (
+        name === "businessName" &&
+        (!state.profile || current.publicSlug === slugify(current.businessName))
+      ) {
+        next.publicSlug = slugify(value);
+      }
+
+      return next;
+    });
+  }
+
+  async function saveProfile(event) {
     event.preventDefault();
     setBusy(true);
     setMessage("");
 
     try {
-      const profile = await profileRequest("/profiles", {
-        method: "POST",
-        body: form,
-        authenticated: true,
-      });
+      const isNew = state.kind === "empty";
+
+      const profile = await profileRequest(
+        isNew ? "/profiles/onboard" : "/profiles/me",
+        {
+          method: isNew ? "POST" : "PATCH",
+          body: profileForm,
+          authenticated: true,
+        }
+      );
+
+      setProfileForm({ ...emptyProfile, ...profile });
       setState({ kind: "profile", profile });
+      setMessage(
+        isNew ? "Your profile is ready." : "Your profile was updated."
+      );
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -85,10 +170,62 @@ export default function DashboardPage() {
     }
   }
 
+  async function addEvidence(event) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+
+    try {
+      const record = await profileRequest("/profiles/me/evidence", {
+        method: "POST",
+        body: evidenceForm,
+        authenticated: true,
+      });
+
+      setEvidence((current) => [record, ...current]);
+      setEvidenceForm(emptyEvidence);
+      setMessage("Completed work added as self-reported.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function requestConfirmation(recordId) {
+    setMessage("");
+
+    try {
+      const request = await profileRequest(
+        `/profiles/me/evidence/${encodeURIComponent(
+          recordId
+        )}/confirmation-request`,
+        {
+          method: "POST",
+          authenticated: true,
+        }
+      );
+
+      const link = `${window.location.origin}/confirm/${request.token}`;
+      setConfirmationLink(link);
+
+      try {
+        await navigator.clipboard.writeText(link);
+        setMessage("Confirmation link copied. It expires in seven days.");
+      } catch {
+        setMessage("Confirmation link created. Copy it below before sharing.");
+      }
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     navigate("/");
   }
+
+  const profile = state.kind === "profile" ? state.profile : null;
 
   return (
     <div className="min-h-screen bg-[#f8f3f1] text-[#24171a]">
@@ -103,6 +240,7 @@ export default function DashboardPage() {
           >
             Vou<span className="text-[#a84551]">ch</span>
           </Link>
+
           <button
             onClick={signOut}
             className="text-sm font-medium text-[#7b3c47] hover:underline"
@@ -113,17 +251,7 @@ export default function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-5 py-10 sm:py-16">
-        {state.kind === "loading" && (
-          <div
-            role="status"
-            aria-label="Loading account"
-            className="animate-pulse space-y-5"
-          >
-            <div className="h-10 w-60 rounded bg-[#e8d8d7]" />
-            <div className="h-40 rounded-2xl bg-[#eee1df]" />
-            <span className="sr-only">Loading account</span>
-          </div>
-        )}
+        {state.kind === "loading" && <LoadingState />}
 
         {state.kind === "signed-out" && (
           <section className="max-w-xl">
@@ -149,9 +277,6 @@ export default function DashboardPage() {
           >
             <h1 className="text-2xl font-semibold">Profile unavailable</h1>
             <p className="mt-3 text-[#6a565a]">{state.message}</p>
-            <p className="mt-3 text-sm text-[#6a565a]">
-              No sample data is shown in your account.
-            </p>
             <button
               className="mt-6 rounded-full border border-[#a84551] px-5 py-2 text-[#8b3541]"
               onClick={() => window.location.reload()}
@@ -161,129 +286,324 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {state.kind === "empty" && (
-          <section className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
-              Your first step
-            </p>
-            <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
-              Introduce your business
-            </h1>
-            <p className="mt-3 text-[#6a565a]">
-              Only publish details you are comfortable sharing. A profile
-              alone does not verify your identity or work.
-            </p>
+        {(state.kind === "empty" || profile) && (
+          <>
+            <section className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
+                {profile ? "Your profile" : "Your first step"}
+              </p>
 
-            <form
-              onSubmit={createProfile}
-              className="mt-8 grid gap-5 rounded-2xl border border-[#e5d8d8] bg-white p-6 sm:p-8"
-            >
-              <label className="grid gap-2 text-sm font-medium">
-                Business name
-                <input
-                  className={inputClass}
-                  required
-                  maxLength={100}
-                  value={form.name}
-                  onChange={(event) =>
-                    setForm({ ...form, name: event.target.value })
-                  }
-                />
-              </label>
+              <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
+                {profile ? profile.businessName : "Introduce your business"}
+              </h1>
 
-              <label className="grid gap-2 text-sm font-medium">
-                I work as
-                <select
-                  className={inputClass}
-                  value={form.type}
-                  onChange={(event) =>
-                    setForm({ ...form, type: event.target.value })
-                  }
-                >
-                  <option value="vendor">Vendor</option>
-                  <option value="freelancer">Freelancer</option>
-                </select>
-              </label>
-
-              <label className="grid gap-2 text-sm font-medium">
-                Location (optional)
-                <input
-                  className={inputClass}
-                  maxLength={100}
-                  value={form.location}
-                  onChange={(event) =>
-                    setForm({ ...form, location: event.target.value })
-                  }
-                />
-              </label>
-
-              <label className="grid gap-2 text-sm font-medium">
-                What do you do?
-                <textarea
-                  className={inputClass}
-                  required
-                  rows={3}
-                  maxLength={500}
-                  value={form.description}
-                  onChange={(event) =>
-                    setForm({ ...form, description: event.target.value })
-                  }
-                />
-              </label>
-
-              {message && (
-                <p role="alert" className="text-sm text-[#9c3545]">
-                  {message}
-                </p>
-              )}
-              <button
-                disabled={busy}
-                className="w-fit rounded-full bg-[#a84551] px-6 py-3 font-semibold text-white disabled:opacity-60"
-              >
-                {busy ? "Creating…" : "Create profile"}
-              </button>
-            </form>
-          </section>
-        )}
-
-        {state.kind === "profile" && (
-          <section>
-            <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
-              Your profile
-            </p>
-            <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
-              {state.profile.name}
-            </h1>
-            <p className="mt-3 max-w-2xl text-[#6a565a]">
-              {state.profile.description}
-            </p>
-
-            <div className="mt-8 rounded-2xl border border-[#e5d8d8] bg-white p-6">
-              <h2 className="text-xl font-semibold">
-                Work and customer confirmations
-              </h2>
               <p className="mt-3 text-[#6a565a]">
-                Record and confirmation actions will become available after
-                the profile API supports them.
+                Only publish details you are comfortable sharing. A profile
+                alone does not verify your identity or work.
               </p>
-              <p className="mt-3 text-sm text-[#6a565a]">
-                {state.profile.records?.length
-                  ? `${state.profile.records.length} record(s) returned by the service. View your public profile to see published records.`
-                  : "No records returned by the service."}
-              </p>
-            </div>
 
-            {state.profile.slug && (
-              <Link
-                className="mt-7 inline-block rounded-full bg-[#a84551] px-6 py-3 text-white"
-                to={`/p/${encodeURIComponent(state.profile.slug)}`}
+              <form
+                onSubmit={saveProfile}
+                className="mt-8 grid gap-5 rounded-2xl border border-[#e5d8d8] bg-white p-6 sm:p-8"
               >
-                View public profile
-              </Link>
+                <Field label="Business name">
+                  <input
+                    className={inputClass}
+                    name="businessName"
+                    required
+                    maxLength={100}
+                    value={profileForm.businessName}
+                    onChange={updateProfileField}
+                  />
+                </Field>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field label="I work as">
+                    <select
+                      className={inputClass}
+                      name="businessType"
+                      value={profileForm.businessType}
+                      onChange={updateProfileField}
+                    >
+                      <option value="VENDOR">Vendor</option>
+                      <option value="FREELANCER">Freelancer</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Category (optional)">
+                    <input
+                      className={inputClass}
+                      name="category"
+                      maxLength={100}
+                      value={profileForm.category || ""}
+                      onChange={updateProfileField}
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Your public Vouch link">
+                  <div className="flex items-center rounded-xl border border-[#d9c7cb] bg-white">
+                    <span className="pl-4 text-sm text-[#6a565a]">/p/</span>
+                    <input
+                      className="min-w-0 flex-1 rounded-xl px-2 py-3 text-[#24171a] focus-visible:outline-2 focus-visible:outline-[#a84551]"
+                      name="publicSlug"
+                      required
+                      pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                      value={profileForm.publicSlug}
+                      onChange={updateProfileField}
+                    />
+                  </div>
+                </Field>
+
+                <Field label="Location (optional)">
+                  <input
+                    className={inputClass}
+                    name="location"
+                    maxLength={100}
+                    value={profileForm.location || ""}
+                    onChange={updateProfileField}
+                  />
+                </Field>
+
+                <Field label="What do you do? (optional)">
+                  <textarea
+                    className={inputClass}
+                    name="bio"
+                    rows={3}
+                    maxLength={500}
+                    value={profileForm.bio || ""}
+                    onChange={updateProfileField}
+                  />
+                </Field>
+
+                <Field label="Website or contact link (optional)">
+                  <input
+                    className={inputClass}
+                    name="contactUrl"
+                    type="url"
+                    value={profileForm.contactUrl || ""}
+                    onChange={updateProfileField}
+                  />
+                </Field>
+
+                <button
+                  disabled={busy}
+                  className="w-fit rounded-full bg-[#a84551] px-6 py-3 font-semibold text-white disabled:opacity-60"
+                >
+                  {busy
+                    ? "Saving..."
+                    : profile
+                    ? "Save profile"
+                    : "Create profile"}
+                </button>
+              </form>
+            </section>
+
+            {profile && (
+              <section className="mt-12 max-w-3xl rounded-2xl border border-[#e5d8d8] bg-white p-6 sm:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
+                      Completed work
+                    </p>
+
+                    <h2 className="mt-2 text-2xl font-semibold">
+                      Record work, then request a response
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-[#6a565a]">
+                      Records stay self-reported unless a customer confirms a
+                      specific record.
+                    </p>
+                  </div>
+
+                  <Link
+                    className="rounded-full border border-[#a84551] px-5 py-2 text-sm font-medium text-[#8b3541]"
+                    to={`/p/${encodeURIComponent(profile.publicSlug)}`}
+                  >
+                    View public profile
+                  </Link>
+                </div>
+
+                {message && (
+                  <p
+                    role="status"
+                    className="mt-6 rounded-xl bg-[#f8f3f1] p-4 text-sm text-[#6a565a]"
+                  >
+                    {message}
+                  </p>
+                )}
+
+                {confirmationLink && (
+                  <p className="mt-4 break-all rounded-xl border border-[#e5d8d8] p-4 text-sm">
+                    <span className="font-semibold">Customer link: </span>
+                    <a
+                      className="text-[#8b3541] underline"
+                      href={confirmationLink}
+                    >
+                      {confirmationLink}
+                    </a>
+                  </p>
+                )}
+
+                <div className="mt-7 divide-y divide-[#eadfdf] border-y border-[#eadfdf]">
+                  {evidence.length ? (
+                    evidence.map((record) => (
+                      <article
+                        key={record.id}
+                        className="flex flex-col justify-between gap-4 py-5 sm:flex-row sm:items-center"
+                      >
+                        <div>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h3 className="font-semibold">{record.title}</h3>
+                            <Status value={record.verificationStatus} />
+                          </div>
+
+                          <p className="mt-1 text-sm text-[#6a565a]">
+                            {record.evidenceType.toLowerCase()} ·{" "}
+                            {new Date(
+                              record.completedDate
+                            ).toLocaleDateString()}
+                          </p>
+
+                          {record.description && (
+                            <p className="mt-2 text-sm text-[#6a565a]">
+                              {record.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {record.verificationStatus === "SELF_REPORTED" && (
+                          <button
+                            onClick={() => requestConfirmation(record.id)}
+                            className="w-fit rounded-full border border-[#a84551] px-4 py-2 text-sm font-medium text-[#8b3541]"
+                          >
+                            Request confirmation
+                          </button>
+                        )}
+                      </article>
+                    ))
+                  ) : (
+                    <p className="py-6 text-sm text-[#6a565a]">
+                      No completed work has been recorded yet.
+                    </p>
+                  )}
+                </div>
+
+                <form
+                  onSubmit={addEvidence}
+                  className="mt-8 grid gap-5 border-t border-[#eadfdf] pt-8 sm:grid-cols-2"
+                >
+                  <h3 className="text-xl font-semibold sm:col-span-2">
+                    Add completed work
+                  </h3>
+
+                  <Field label="Short title">
+                    <input
+                      className={inputClass}
+                      required
+                      maxLength={160}
+                      value={evidenceForm.title}
+                      onChange={(event) =>
+                        setEvidenceForm({
+                          ...evidenceForm,
+                          title: event.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+
+                  <Field label="Type">
+                    <select
+                      className={inputClass}
+                      value={evidenceForm.evidenceType}
+                      onChange={(event) =>
+                        setEvidenceForm({
+                          ...evidenceForm,
+                          evidenceType: event.target.value,
+                        })
+                      }
+                    >
+                      <option value="ORDER">Order</option>
+                      <option value="PROJECT">Project</option>
+                      <option value="DELIVERY">Delivery</option>
+                      <option value="SERVICE">Service</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Completed on">
+                    <input
+                      className={inputClass}
+                      type="date"
+                      required
+                      value={evidenceForm.completedDate}
+                      onChange={(event) =>
+                        setEvidenceForm({
+                          ...evidenceForm,
+                          completedDate: event.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+
+                  <Field label="Customer name (private, optional)">
+                    <input
+                      className={inputClass}
+                      maxLength={100}
+                      value={evidenceForm.customerName}
+                      onChange={(event) =>
+                        setEvidenceForm({
+                          ...evidenceForm,
+                          customerName: event.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+
+                  <div className="sm:col-span-2">
+                    <Field label="Description (optional)">
+                      <textarea
+                        className={inputClass}
+                        rows={3}
+                        maxLength={500}
+                        value={evidenceForm.description}
+                        onChange={(event) =>
+                          setEvidenceForm({
+                            ...evidenceForm,
+                            description: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                  </div>
+
+                  <button
+                    disabled={busy}
+                    className="w-fit rounded-full bg-[#a84551] px-6 py-3 font-semibold text-white disabled:opacity-60 sm:col-span-2"
+                  >
+                    {busy ? "Adding..." : "Add completed work"}
+                  </button>
+                </form>
+              </section>
             )}
-          </section>
+          </>
         )}
       </main>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading account"
+      className="animate-pulse space-y-5"
+    >
+      <div className="h-10 w-60 rounded bg-[#e8d8d7]" />
+      <div className="h-40 rounded-2xl bg-[#eee1df]" />
+      <span className="sr-only">Loading account</span>
     </div>
   );
 }

@@ -25,12 +25,17 @@ export default function ConfirmationPage() {
 
   async function respond(decision) {
     setBusy(true);
+
     try {
       const result = await profileRequest(
         `/confirmations/${encodeURIComponent(token)}/respond`,
-        { method: "POST", body: { decision } },
+        {
+          method: "POST",
+          body: { decision },
+        }
       );
-      setState({ kind: "done", decision: result?.status || decision });
+
+      setState({ kind: "done", decision: result?.state || decision });
     } catch (error) {
       setState({ kind: "error", message: error.message });
     } finally {
@@ -59,13 +64,11 @@ export default function ConfirmationPage() {
 
           {state.kind === "error" && (
             <div role="alert">
-              <h1 className="text-2xl font-semibold">
-                Request unavailable
-              </h1>
+              <h1 className="text-2xl font-semibold">Request unavailable</h1>
               <p className="mt-3 text-[#6a565a]">{state.message}</p>
               <p className="mt-3 text-sm text-[#6a565a]">
-                The link may have expired, already been used, or the
-                service may be unavailable.
+                The link may have expired, already been used, or the service may
+                be unavailable.
               </p>
             </div>
           )}
@@ -75,24 +78,22 @@ export default function ConfirmationPage() {
               <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
                 Customer response
               </p>
+
               <h1 className="mt-3 text-3xl font-semibold">
                 Did this work happen as described?
               </h1>
-              <p className="mt-4 text-[#6a565a]">
-                {state.request.businessName} asked you to respond to this
-                record:
-              </p>
+
               <div className="mt-5 rounded-xl bg-[#f8f3f1] p-5">
-                <h2 className="font-semibold">{state.request.title}</h2>
-                <p className="mt-2 text-sm text-[#6a565a]">
-                  {state.request.description}
+                <p className="font-medium leading-7">
+                  {state.request.statement}
                 </p>
               </div>
+
               <p className="mt-5 text-sm leading-6 text-[#6a565a]">
-                Respond only if you know this work. Your response does not
-                prove your identity. Your contact details should remain
-                private. You can decline or leave without responding.
+                Respond only if you know this work. Your response does not prove
+                your identity. You can decline or leave without responding.
               </p>
+
               <div className="mt-6 flex flex-wrap gap-3">
                 <button
                   disabled={busy}
@@ -101,6 +102,7 @@ export default function ConfirmationPage() {
                 >
                   Confirm description
                 </button>
+
                 <button
                   disabled={busy}
                   onClick={() => respond("declined")}
@@ -114,9 +116,7 @@ export default function ConfirmationPage() {
 
           {state.kind === "done" && (
             <div role="status">
-              <h1 className="text-2xl font-semibold">
-                Response recorded
-              </h1>
+              <h1 className="text-2xl font-semibold">Response recorded</h1>
               <p className="mt-3 text-[#6a565a]">
                 Your response was recorded as {state.decision}. Thank you.
               </p>

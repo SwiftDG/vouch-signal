@@ -3,51 +3,35 @@ import { Link, useParams } from "react-router-dom";
 import { profileRequest } from "../lib/profileApi";
 
 const example = {
-  name: "Amara Cakes",
-  type: "vendor",
+  publicSlug: "amara-cakes",
+  businessName: "Amara Cakes",
+  businessType: "VENDOR",
+  category: "Cake maker",
   location: "Lagos, Nigeria",
-  description:
-    "An illustrative cake business profile. All names and records on this page are fictional.",
-  records: [
+  bio: "An illustrative cake business profile. All names and records on this page are fictional.",
+  evidence: [
     {
-      id: "example-1",
       title: "Birthday cake order",
-      status: "confirmed",
-      completedAt: "2026-09-12",
-    },
-    {
-      id: "example-2",
-      title: "Custom order",
-      status: "self_reported",
-      completedAt: "2026-09-08",
+      evidenceType: "ORDER",
+      completedDate: "2026-09-12",
+      verificationStatus: "CUSTOMER_CONFIRMED",
     },
   ],
 };
 
-function statusText(status) {
-  return (
-    {
-      confirmed: "Customer responded: confirmed",
-      declined: "Customer responded: declined",
-      pending: "Customer response pending",
-      self_reported: "Owner reported",
-    }[status] || "Status unavailable"
-  );
-}
-
 export default function PublicProfilePage({ exampleMode = false }) {
   const { slug } = useParams();
+
   const [state, setState] = useState(
-    exampleMode
-      ? { kind: "ready", profile: example }
-      : { kind: "loading" },
+    exampleMode ? { kind: "ready", profile: example } : { kind: "loading" }
   );
 
   useEffect(() => {
     if (exampleMode) return;
 
     const controller = new AbortController();
-    profileRequest(`/profiles/${encodeURIComponent(slug)}`, {
+
+    profileRequest(`/public/profiles/${encodeURIComponent(slug)}`, {
       signal: controller.signal,
     })
       .then((profile) => setState({ kind: "ready", profile }))
@@ -69,6 +53,7 @@ export default function PublicProfilePage({ exampleMode = false }) {
         <Link to="/" className="text-2xl font-bold">
           Vou<span className="text-[#ff735c]">ch</span>
         </Link>
+
         <Link className="text-sm text-white/70 hover:text-white" to="/">
           Home
         </Link>
@@ -93,6 +78,7 @@ export default function PublicProfilePage({ exampleMode = false }) {
                 ? "Profile not found"
                 : "Profile unavailable"}
             </h1>
+
             <p className="mt-4 text-white/60">
               {state.kind === "missing"
                 ? "This profile does not exist or is not public."
@@ -113,66 +99,90 @@ export default function PublicProfilePage({ exampleMode = false }) {
 
             <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[#101620]">
               <div className="h-28 bg-[#481e29]" />
+
               <div className="p-7 sm:p-10">
                 <p className="text-xs uppercase tracking-widest text-[#ff806b]">
                   Business profile
                 </p>
+
                 <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
-                  {state.profile.name}
+                  {state.profile.businessName}
                 </h1>
+
                 <p className="mt-2 text-sm text-white/50">
-                  {state.profile.type}
-                  {state.profile.location
-                    ? ` · ${state.profile.location}`
-                    : ""}
+                  {state.profile.category ||
+                    (state.profile.businessType === "VENDOR"
+                      ? "Vendor"
+                      : "Freelancer")}
+                  {state.profile.location ? ` · ${state.profile.location}` : ""}
                 </p>
-                <p className="mt-6 max-w-2xl leading-7 text-white/70">
-                  {state.profile.description}
-                </p>
+
+                {state.profile.bio && (
+                  <p className="mt-6 max-w-2xl leading-7 text-white/70">
+                    {state.profile.bio}
+                  </p>
+                )}
+
+                {state.profile.contactUrl && (
+                  <a
+                    className="mt-5 inline-block text-sm text-[#ffb0a4] underline"
+                    href={state.profile.contactUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Contact this business
+                  </a>
+                )}
               </div>
             </section>
 
             <section className="mt-5 rounded-[30px] border border-white/10 bg-[#101620] p-7 sm:p-10">
               <h2 className="text-2xl font-semibold">
-                Public work history
+                Customer-confirmed work
               </h2>
+
               <p className="mt-2 text-sm leading-6 text-white/50">
-                Owner reported records and customer responses are labelled
-                separately. A response is not identity verification or a
+                These records were added by the business and later confirmed by
+                a customer. A confirmation is not identity verification or a
                 guarantee of future work.
               </p>
 
-              {state.profile.records?.length ? (
+              {state.profile.evidence?.length ? (
                 <ul className="mt-6 divide-y divide-white/10">
-                  {state.profile.records.map((record) => (
+                  {state.profile.evidence.map((record) => (
                     <li
-                      key={record.id}
+                      key={`${record.title}-${record.completedDate}`}
                       className="flex flex-col justify-between gap-2 py-5 sm:flex-row"
                     >
                       <div>
                         <p className="font-medium">{record.title}</p>
-                        <p className="mt-1 text-xs text-white/40">
-                          {record.completedAt || "Date unavailable"}
+
+                        {record.description && (
+                          <p className="mt-2 text-sm text-white/60">
+                            {record.description}
+                          </p>
+                        )}
+
+                        <p className="mt-2 text-xs text-white/40">
+                          {record.evidenceType}
                         </p>
                       </div>
-                      <p className="text-sm text-[#ffb0a4]">
-                        {statusText(record.status)}
-                      </p>
+
+                      <div className="text-sm text-[#ffb0a4]">
+                        <p>Customer confirmed</p>
+                        <p className="mt-1 text-xs text-white/40">
+                          {new Date(record.completedDate).toLocaleDateString()}
+                        </p>
+                      </div>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <p className="mt-6 rounded-xl border border-white/10 p-5 text-white/60">
-                  No public records yet.
+                  No customer-confirmed work has been shared yet.
                 </p>
               )}
             </section>
-
-            <p className="mt-6 text-sm leading-6 text-white/45">
-              Only records the owner chose to publish should appear here.
-              Do not share customer names, contact details, or private order
-              information without consent.
-            </p>
           </>
         )}
       </main>
