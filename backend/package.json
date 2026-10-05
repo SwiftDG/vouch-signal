@@ -1,7 +1,7 @@
 {
   "name": "vouch-signal",
   "version": "1.0.0",
-  "description": "AI-powered financial reputation scoring system",
+  "description": "Trust infrastructure for completed work and customer confirmations",
   "main": "dist/server.js",
   "scripts": {
     "build": "npx prisma generate && tsc",
