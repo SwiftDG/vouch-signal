@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+enum BusinessType {
+  VENDOR
+  FREELANCER
+}
+
+enum EvidenceType {
+  ORDER
+  PROJECT
+  DELIVERY
+  SERVICE
+  OTHER
+}
+
+enum VerificationStatus {
+  SELF_REPORTED
+  CUSTOMER_CONFIRMED
+}
+
+enum ConfirmationState {
+  PENDING
+  CONFIRMED
+  DECLINED
+  EXPIRED
+}
+
+model BusinessProfile {
+  id              String       @id @default(cuid())
+  supabaseUserId  String       @unique
+  publicSlug      String       @unique
+  businessName    String
+  businessType    BusinessType
+  category        String?
+  bio             String?
+  location        String?
+  contactUrl      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  evidence Evidence[]
+}
+
+model Evidence {
+  id                 String             @id @default(cuid())
+  businessProfileId  String
+  title              String
+  description        String?
+  evidenceType       EvidenceType
+  completedDate      DateTime
+  customerName       String?
+  verificationStatus VerificationStatus @default(SELF_REPORTED)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  businessProfile    BusinessProfile     @relation(fields: [businessProfileId], references: [id])
+  confirmationRequest ConfirmationRequest?
+}
+
+model ConfirmationRequest {
+  id             String            @id @default(cuid())
+  evidenceId     String            @unique
+  token          String            @unique
+  state          ConfirmationState @default(PENDING)
+  expiresAt      DateTime
+  confirmerName  String?
+  confirmedAt    DateTime?
+  declinedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  evidence Evidence @relation(fields: [evidenceId], references: [id])
+}
