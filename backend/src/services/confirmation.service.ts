@@ -28,7 +28,14 @@ export async function createConfirmationRequest(supabaseUserId: string, evidence
     const request = evidence.confirmationRequest
       ? await transaction.confirmationRequest.update({
           where: { id: evidence.confirmationRequest.id },
-          data: { token, state: ConfirmationState.PENDING, expiresAt, confirmerName: null, confirmedAt: null },
+          data: {
+            token,
+            state: ConfirmationState.PENDING,
+            expiresAt,
+            confirmerName: null,
+            confirmedAt: null,
+            declinedAt: null,
+          },
           select: { token: true, expiresAt: true },
         })
       : await transaction.confirmationRequest.create({
@@ -44,6 +51,7 @@ export async function readConfirmationRequest(token: string) {
   const request = await prisma.confirmationRequest.findUnique({
     where: { token },
     select: {
+      id: true,
       state: true,
       expiresAt: true,
       evidence: {
@@ -58,18 +66,30 @@ export async function readConfirmationRequest(token: string) {
 
   if (!request) return { kind: 'not-found' as const };
 
-  const statement = `Did ${request.evidence.businessProfile.businessName} complete "${request.evidence.title}" on ${request.evidence.completedDate.toISOString().slice(0, 10)}?`;
-  if (request.state === ConfirmationState.CONFIRMED) {
-    return { kind: 'available' as const, state: request.state, statement };
-  }
-  if (request.state === ConfirmationState.EXPIRED || request.expiresAt <= new Date()) {
+  const now = new Date();
+  if (request.state === ConfirmationState.EXPIRED || request.expiresAt <= now) {
+    if (request.state === ConfirmationState.PENDING) {
+      await prisma.confirmationRequest.updateMany({
+        where: { id: request.id, state: ConfirmationState.PENDING, expiresAt: { lte: now } },
+        data: { state: ConfirmationState.EXPIRED },
+      });
+    }
     return { kind: 'expired' as const };
   }
+  if (request.state !== ConfirmationState.PENDING) {
+    return { kind: 'already-used' as const, state: request.state };
+  }
 
-  return { kind: 'available' as const, state: request.state, statement, expiresAt: request.expiresAt };
+  const statement = `Did ${request.evidence.businessProfile.businessName} complete "${request.evidence.title}" on ${request.evidence.completedDate.toISOString().slice(0, 10)}?`;
+  return {
+    kind: 'available' as const,
+    state: request.state,
+    statement,
+    expiresAt: request.expiresAt,
+  };
 }
 
-export async function confirmEvidence(token: string, confirmerName?: string | null) {
+export async function respondToConfirmation(token: string, decision: 'confirmed' | 'declined') {
   const now = new Date();
   return prisma.$transaction(async (transaction) => {
     const request = await transaction.confirmationRequest.findUnique({
@@ -78,8 +98,10 @@ export async function confirmEvidence(token: string, confirmerName?: string | nu
     });
 
     if (!request) return { kind: 'not-found' as const };
-    if (request.state === ConfirmationState.CONFIRMED) return { kind: 'already-confirmed' as const };
     if (request.state === ConfirmationState.EXPIRED) return { kind: 'expired' as const };
+    if (request.state !== ConfirmationState.PENDING) {
+      return { kind: 'already-used' as const, state: request.state };
+    }
 
     if (request.expiresAt <= now) {
       await transaction.confirmationRequest.updateMany({
@@ -89,21 +111,34 @@ export async function confirmEvidence(token: string, confirmerName?: string | nu
       return { kind: 'expired' as const };
     }
 
+    const state = decision === 'confirmed' ? ConfirmationState.CONFIRMED : ConfirmationState.DECLINED;
     const changed = await transaction.confirmationRequest.updateMany({
       where: { id: request.id, state: ConfirmationState.PENDING, expiresAt: { gt: now } },
       data: {
-        state: ConfirmationState.CONFIRMED,
-        confirmedAt: now,
-        confirmerName: confirmerName?.trim() || null,
+        state,
+        confirmedAt: decision === 'confirmed' ? now : null,
+        declinedAt: decision === 'declined' ? now : null,
       },
     });
-    if (changed.count !== 1) return { kind: 'already-confirmed' as const };
+    if (changed.count !== 1) {
+      const current = await transaction.confirmationRequest.findUnique({
+        where: { id: request.id },
+        select: { state: true },
+      });
+      if (current?.state === ConfirmationState.EXPIRED) return { kind: 'expired' as const };
+      return {
+        kind: 'already-used' as const,
+        state: current?.state ?? request.state,
+      };
+    }
 
-    await transaction.evidence.update({
-      where: { id: request.evidenceId },
-      data: { verificationStatus: VerificationStatus.CUSTOMER_CONFIRMED },
-    });
+    if (decision === 'confirmed') {
+      await transaction.evidence.update({
+        where: { id: request.evidenceId },
+        data: { verificationStatus: VerificationStatus.CUSTOMER_CONFIRMED },
+      });
+    }
 
-    return { kind: 'confirmed' as const, confirmedAt: now };
+    return { kind: 'responded' as const, state, respondedAt: now };
   });
 }

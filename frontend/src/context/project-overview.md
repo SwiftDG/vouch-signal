@@ -1,63 +1,79 @@
-# Vouch — Project Overview
+# Vouch Signal — Project Overview
 
 ## What This Application Does
 
-Vouch helps independent businesses and skilled workers present completed work and customer confirmations in a portable public profile. It is a portfolio and evidence tool, not a payment, lending, or financial product.
+Vouch Signal is an AI-powered financial reputation scoring system for Nigeria's informal economy. It gives informal traders a Market Reputation Score built from real Squad transaction behaviour — unlocking loans, inventory credit, and financial services they have never had access to before.
+
+Every payment a trader receives through their Squad Virtual Account becomes a trust signal. The AI engine analyses transaction patterns, customer diversity, consistency, and dispute history to generate a dynamic score. That score is their financial identity.
 
 ## Goals
 
-1. Help vendors and freelancers describe their skills and services.
-2. Give each person a shareable public work profile.
-3. Let customers confirm a specific completed project, order, delivery, or service.
-4. Clearly distinguish self-reported work from customer-confirmed work.
-5. Keep public claims factual, limited, and explainable.
+1. Give 40M+ Nigerian informal traders a verifiable financial identity built from real economic behaviour
+2. Connect traders to loans, inventory credit, and insurance using Squad transaction data as the alternative credit signal
+3. Detect fraud and fake merchants through the same transaction intelligence that builds legitimate scores
+4. Demonstrate deep Squad API integration across Virtual Accounts, Payment Gateway, Webhooks, Transfer API, and Recurring Payments
+5. Win Squad Hackathon 3.0 with a technically rigorous, demable, and emotionally compelling product
 
 ## Core User Flow
 
-1. A person signs up or signs in with Supabase Auth.
-2. They create a profile with a name, work type, skills/category, description, location, and public slug.
-3. They record a completed piece of work.
-4. They request a one-time, expiring confirmation link for that item.
-5. A customer reviews a plain statement and confirms it.
-6. The person shares `/p/:slug`; only customer-confirmed work is displayed publicly.
+1. Trader visits the Vouch Signal homepage and clicks Get Started
+2. Trader registers with phone number and business details
+3. Squad Virtual Account is created automatically via API
+4. Trader receives a QR code and Squad payment link for their customers
+5. Customers pay through Squad — every transaction feeds the scoring engine via webhooks
+6. Trader watches their Market Reputation Score update in real time on their dashboard
+7. Score crosses threshold — financial products unlock (microloans, inventory financing, insurance)
+8. Trader accepts a loan offer — Squad Transfer API disburses funds instantly to their Virtual Account
+9. Loan repayment is automated via Squad Recurring Payments
 
 ## Features
 
-### Account and profile
-- Email/password or Google authentication through Supabase.
-- Vendor or freelancer profile with a unique public slug.
-- Profile details editable by the authenticated owner.
+### Authentication & Onboarding
+- Phone number registration
+- Business details capture (name, category, location)
+- Squad Virtual Account creation on signup
+- QR code generation for customer payments
 
-### Completed work
-- Records for orders, projects, deliveries, services, and other work.
-- New records are `SELF_REPORTED`.
-- Confirmation links expire after seven days; confirmed tokens cannot be reused.
+### Trader Dashboard
+- Market Reputation Score display (0–1000)
+- Score history chart
+- Transaction feed (powered by Squad webhooks)
+- Financial product unlock tracker
+- Loan application and disbursement flow
 
-### Public profile
-- Shows selected public profile fields and `CUSTOMER_CONFIRMED` work only.
-- Never exposes owner IDs, confirmation tokens, customer names, or private evidence.
+### Scoring Engine (Backend)
+- Real-time score update on every Squad webhook event
+- Sender diversity analysis (fraud detection)
+- Transaction consistency scoring
+- Dispute rate tracking
+- Ajo circle contribution tracking
 
-### Landing page
-- Explains profiles, completed work, and customer confirmation.
-- Responsive for mobile and desktop.
+### Landing Page (this frontend)
+- Nav, Hero, Stats, Problem, HowItWorks, ScoreDisplay mockup, SquadAPIs, CTA sections
+- Fully animated with Framer Motion
+- Responsive for mobile and desktop
 
 ## Scope
 
 ### In Scope
-- Landing homepage for skills and work profiles.
-- Supabase authentication and profile onboarding.
-- Completed-work management and customer confirmation.
-- Public profile with explicitly filtered fields.
+- Landing homepage (all 8 sections)
+- Trader registration and onboarding flow
+- Trader dashboard with live score display
+- Squad API integration (Virtual Accounts, Webhooks, Transfer API)
+- AI scoring engine (Claude API)
+- Loan application and disbursement demo flow
 
 ### Out of Scope
-- Payment processing, bank integrations, transfers, loans, credit, insurance, and financial underwriting.
-- Ajo, transaction-ledger scoring, payment webhooks, and financial risk scoring.
-- Claims that a business is guaranteed to perform or has verified identity.
+- Lender portal (Phase 2)
+- Open Banking integration (Phase 2)
+- Mobile app (Phase 2)
+- B2B bank API licensing (Phase 2)
+- Real loan product (demo only for hackathon)
 
 ## Success Criteria
 
-- A person can create and edit a profile without manual database changes.
-- They can add completed work and request customer confirmation.
-- A customer can confirm once through a secure expiring link.
-- The public profile contains only deliberately public fields and confirmed work.
-- Frontend and backend builds pass, and a real end-to-end test is recorded.
+- A trader can register and receive a Squad Virtual Account in under 60 seconds
+- A simulated payment via Squad webhook visibly updates the score on the dashboard
+- A loan offer appears when the score crosses 500 and disbursement completes via Transfer API
+- The fraud detection engine flags circular transactions and reduces the score visibly
+- The landing page is polished enough that judges mistake it for a funded startup

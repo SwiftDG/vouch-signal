@@ -31,6 +31,7 @@ WITH expected_columns(table_name, column_name, data_type, udt_name, is_nullable)
         ('ConfirmationRequest', 'expiresAt', 'timestamp without time zone', 'timestamp', 'NO'),
         ('ConfirmationRequest', 'confirmerName', 'text', 'text', 'YES'),
         ('ConfirmationRequest', 'confirmedAt', 'timestamp without time zone', 'timestamp', 'YES'),
+        ('ConfirmationRequest', 'declinedAt', 'timestamp without time zone', 'timestamp', 'YES'),
         ('ConfirmationRequest', 'createdAt', 'timestamp without time zone', 'timestamp', 'NO'),
         ('ConfirmationRequest', 'updatedAt', 'timestamp without time zone', 'timestamp', 'NO')
 ), checks(check_name, passed, details) AS (
@@ -156,7 +157,7 @@ WITH expected_columns(table_name, column_name, data_type, udt_name, is_nullable)
         ('BusinessType', ARRAY['VENDOR', 'FREELANCER']::text[]),
         ('EvidenceType', ARRAY['ORDER', 'PROJECT', 'DELIVERY', 'SERVICE', 'OTHER']::text[]),
         ('VerificationStatus', ARRAY['SELF_REPORTED', 'CUSTOMER_CONFIRMED']::text[]),
-        ('ConfirmationState', ARRAY['PENDING', 'CONFIRMED', 'EXPIRED']::text[])
+        ('ConfirmationState', ARRAY['PENDING', 'CONFIRMED', 'DECLINED', 'EXPIRED']::text[])
     ) AS expected(enum_name, enum_values)
 
     UNION ALL

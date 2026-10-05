@@ -1,7 +1,7 @@
 {
   "name": "vouch-signal",
   "version": "1.0.0",
-  "description": "Trust infrastructure for completed work and customer confirmations",
+  "description": "Trust Profile API for business profiles, evidence, and customer confirmations",
   "main": "dist/server.js",
   "scripts": {
     "build": "npx prisma generate && tsc",

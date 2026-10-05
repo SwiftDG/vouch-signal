@@ -9,6 +9,6 @@ router.get('/me', requireSupabaseAuth, getMyProfile);
 router.patch('/me', requireSupabaseAuth, updateMyProfile);
 router.post('/me/evidence', requireSupabaseAuth, createEvidence);
 router.get('/me/evidence', requireSupabaseAuth, getMyEvidence);
-router.post('/me/evidence/:evidenceId/confirmation-request', requireSupabaseAuth, requestEvidenceConfirmation);
+router.post('/me/evidence/:id/confirmation-request', requireSupabaseAuth, requestEvidenceConfirmation);
 
 export default router;

@@ -30,6 +30,7 @@ enum VerificationStatus {
 enum ConfirmationState {
   PENDING
   CONFIRMED
+  DECLINED
   EXPIRED
 }
 
@@ -73,9 +74,9 @@ model ConfirmationRequest {
   expiresAt      DateTime
   confirmerName  String?
   confirmedAt    DateTime?
+  declinedAt     DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
   evidence Evidence @relation(fields: [evidenceId], references: [id])
 }
-

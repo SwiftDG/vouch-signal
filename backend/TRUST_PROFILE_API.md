@@ -1,328 +1,36 @@
-# Trust Profile API Audit
+# Trust Profile API
 
-## Unit 1: Branch and Middleware Audit
+The backend supports business profile onboarding and updates, evidence records, customer confirmation, and public profile reads.
 
-### Branch
-- Working branch: `backend/trust-profile-api`
-- Current branch confirmed by git: `backend/trust-profile-api`
-- This repo snapshot does not currently contain the `rebuild/trust-profile-mvp` branch locally, so the audit is being recorded against the available local base in this checkout.
+## Routes
 
-### Existing Supabase JWT middleware
-The existing middleware is located at:
+| Method | Route | Access |
+| --- | --- | --- |
+| `POST` | `/api/v1/profiles/onboard` | Authenticated owner |
+| `GET` | `/api/v1/profiles/me` | Authenticated owner |
+| `PATCH` | `/api/v1/profiles/me` | Authenticated owner |
+| `POST` | `/api/v1/profiles/me/evidence` | Authenticated owner |
+| `GET` | `/api/v1/profiles/me/evidence` | Authenticated owner |
+| `POST` | `/api/v1/profiles/me/evidence/:id/confirmation-request` | Authenticated owner |
+| `GET` | `/api/v1/public/profiles/:slug` | Public |
+| `POST` | `/api/v1/confirmations/:token` | Public |
+| `POST` | `/api/v1/confirmations/:token/respond` | Public |
 
-- `backend/src/middlewares/auth.middleware.ts`
+Every owner route uses Supabase JWT authentication. Profile and evidence queries are scoped to the authenticated user's `req.user.id`; clients cannot select another owner's record by supplying a user ID.
 
-This middleware does the following:
+Successful responses use `{ "data": ..., "error": null }`. Errors use `{ "data": ..., "error": "..." }`.
 
-1. Reads the bearer token from the `Authorization` header.
-2. Validates that the header starts with `Bearer `.
-3. Fetches the Supabase JWKS key from `${config.supabaseUrl}/auth/v1/.well-known/jwks.json` via `jwks-rsa`.
-4. Verifies the JWT using `jwt.verify` with:
-   - algorithms: `['RS256', 'ES256']`
-   - audience: `'authenticated'`
-   - issuer: `${config.supabaseUrl}/auth/v1`
-5. Reads the user UUID from the JWT `sub` claim.
-6. Attaches it to the request as `req.user = { id: payload.sub }`.
-7. Returns `401` for missing, invalid, or expired tokens.
+## Profile onboarding and maintenance
 
-Relevant code from the repository history:
+`POST /api/v1/profiles/onboard` accepts `businessName`, `businessType` (`VENDOR` or `FREELANCER`), and `publicSlug`. Optional fields are `category`, `bio`, `location`, and `contactUrl`. Repeating onboarding for the same authenticated user returns the existing profile without modifying it.
 
-```ts
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import jwksClient from 'jwks-rsa';
-import { config } from '../config/env';
+`GET /api/v1/profiles/me` reads the authenticated user's profile. `PATCH /api/v1/profiles/me` accepts one or more editable profile fields: `businessName`, `businessType`, `publicSlug`, `category`, `bio`, `location`, and `contactUrl`. Supabase user IDs cannot be changed via request data.
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: string };
-    }
-  }
-}
+The profile responses exclude `supabaseUserId`. Missing profiles return HTTP 404, invalid input returns HTTP 400, duplicate slugs return HTTP 409, and missing/invalid authentication returns HTTP 401.
 
-const client = jwksClient({
-  jwksUri: `${config.supabaseUrl}/auth/v1/.well-known/jwks.json`,
-  cache: true,
-  rateLimit: true
-});
+## Evidence
 
-function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
-  client.getSigningKey(header.kid, function(err, key) {
-    if (err || !key) {
-      console.error('Failed to fetch Supabase Public Key:', err);
-      return callback(err, undefined);
-    }
-    const signingKey = key.getPublicKey();
-    callback(null, signingKey);
-  });
-}
-
-export const requireSupabaseAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ data: null, error: 'Missing or invalid authorization header' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  jwt.verify(
-    token,
-    getKey,
-    {
-      algorithms: ['RS256', 'ES256'],
-      audience: 'authenticated',
-      issuer: `${config.supabaseUrl}/auth/v1`
-    },
-    (err, decoded) => {
-      if (err || !decoded) {
-        console.error('JWT Verification failed:', err);
-        return res.status(401).json({ data: null, error: 'Invalid or expired token' });
-      }
-
-      const payload = decoded as jwt.JwtPayload;
-
-      if (!payload.sub) {
-        return res.status(401).json({ data: null, error: 'Invalid token payload' });
-      }
-
-      req.user = { id: payload.sub };
-      next();
-    }
-  );
-};
-```
-
-### Usage pattern
-The authenticated route pattern attaches the existing JWT middleware before the controller:
-
-```ts
-import { Router } from 'express';
-import { requireSupabaseAuth } from '../middlewares/auth.middleware';
-
-const router = Router();
-
-router.get('/me', requireSupabaseAuth, getMyProfile);
-```
-
-Owner-only Trust Profile endpoints attach the Supabase auth middleware before the controller and validate ownership against `req.user.id`.
-
-### Conclusion
-Unit 1 is complete in the repo sense: the branch exists, the middleware is confirmed, and the request-user attachment pattern has been documented and is ready to reuse for the Trust Profile API work.
-
----
-
-## Unit 2: BusinessProfile Migration
-
-### Schema
-The additive migration introduces the `BusinessProfile` table and the `BusinessType` enum in the Prisma schema.
-
-```prisma
-enum BusinessType {
-  VENDOR
-  FREELANCER
-}
-
-model BusinessProfile {
-  id              String       @id @default(cuid())
-  supabaseUserId  String       @unique
-  publicSlug      String       @unique
-  businessName    String
-  businessType    BusinessType
-  category        String?
-  bio             String?
-  location        String?
-  contactUrl      String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-}
-```
-
-### Migration file
-- `backend/prisma/migrations/20260926000000_business_profile/migration.sql`
-
-This migration is additive only. It creates:
-- the enum `BusinessType`
-- the `BusinessProfile` table
-- unique indexes for `supabaseUserId` and `publicSlug`
-
-### Done criteria
-This unit is complete once the migration can be applied without destructive statements and the table is scoped to one profile per authenticated Supabase user, with a unique public slug for the public profile endpoint.
-
----
-
-## Unit 3: Evidence Migration
-
-### Schema
-The additive migration introduces the `Evidence` table and the required enums for evidence type and verification status.
-
-```prisma
-enum EvidenceType {
-  ORDER
-  PROJECT
-  DELIVERY
-  SERVICE
-  OTHER
-}
-
-enum VerificationStatus {
-  SELF_REPORTED
-  CUSTOMER_CONFIRMED
-}
-
-model Evidence {
-  id                 String             @id @default(cuid())
-  businessProfileId  String
-  title              String
-  description        String?
-  evidenceType       EvidenceType
-  completedDate      DateTime
-  customerName       String?
-  verificationStatus VerificationStatus @default(SELF_REPORTED)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-
-  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id])
-}
-```
-
-### Migration file
-- `backend/prisma/migrations/20260926000001_evidence/migration.sql`
-
-This migration creates:
-- the `EvidenceType` enum
-- the `VerificationStatus` enum
-- the `Evidence` table
-- a foreign key to `BusinessProfile` via `businessProfileId`
-- a default status of `SELF_REPORTED` for newly created evidence
-
-### Done criteria
-Unit 3 is complete when the migration applies cleanly and the `Evidence.businessProfileId` foreign key is enforced to the owning `BusinessProfile` row.
-
----
-
-## Unit 4: ConfirmationRequest Migration
-
-### Schema
-The additive migration introduces the `ConfirmationRequest` table and the required confirmation state enum.
-
-```prisma
-enum ConfirmationState {
-  PENDING
-  CONFIRMED
-  EXPIRED
-}
-
-model ConfirmationRequest {
-  id             String            @id @default(cuid())
-  evidenceId     String            @unique
-  token          String            @unique
-  state          ConfirmationState @default(PENDING)
-  expiresAt      DateTime
-  confirmerName  String?
-  confirmedAt    DateTime?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  evidence Evidence @relation(fields: [evidenceId], references: [id])
-}
-```
-
-### Migration file
-- `backend/prisma/migrations/20260926000002_confirmation_request/migration.sql`
-
-This migration creates:
-- the `ConfirmationState` enum
-- the `ConfirmationRequest` table
-- a unique one-to-one link from `evidenceId` to the owning evidence item
-- a unique `token` column with a database index via the unique constraint
-- expiry and status tracking for the public confirmation flow
-
-### Done criteria
-Unit 4 is complete when the migration applies cleanly, the token column is unique and indexed, and the confirmation record is tied to exactly one evidence item.
-
----
-
-## Unit 5: Onboarding Endpoint
-
-### Request
-`POST /api/v1/profiles/onboard` requires a Supabase bearer token. The authenticated user ID comes from `req.user.id`; callers cannot provide or override it in the body.
-
-```json
-{
-  "businessName": "Amara Cakes",
-  "businessType": "VENDOR",
-  "publicSlug": "amara-cakes",
-  "category": "Bakery",
-  "bio": "Custom cakes for celebrations",
-  "location": "Lagos",
-  "contactUrl": "https://example.com/contact"
-}
-```
-
-`businessName`, `businessType` (`VENDOR` or `FREELANCER`), and `publicSlug` are required. The slug must contain lowercase letters, digits, and single hyphens between segments. `category`, `bio`, `location`, and `contactUrl` are optional strings or `null`.
-
-### Responses
-Success returns HTTP 200 with the profile fields, excluding the Supabase user ID:
-
-```json
-{
-  "data": {
-    "id": "...",
-    "publicSlug": "amara-cakes",
-    "businessName": "Amara Cakes",
-    "businessType": "VENDOR",
-    "category": "Bakery",
-    "bio": "Custom cakes for celebrations",
-    "location": "Lagos",
-    "contactUrl": "https://example.com/contact",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "error": null
-}
-```
-
-Repeating a valid request for the same authenticated user returns that user's existing profile without changing it. A slug already owned by another user returns HTTP 409. Missing/invalid bearer credentials return HTTP 401; invalid fields return HTTP 400.
-
-### Manual verification
-1. Send a valid authenticated onboarding request and record the returned profile ID.
-2. Repeat the request with the same bearer token; confirm the same profile ID is returned and only one row exists for that `supabaseUserId`.
-3. Try the same slug with a different authenticated user; confirm HTTP 409.
-4. Omit the bearer token and try an invalid business type; confirm HTTP 401 and HTTP 400 respectively.
-
----
-
-## Unit 6: Profile Read and Update
-
-### Requests
-- `GET /api/v1/profiles/me` requires a Supabase bearer token and looks up the profile using only the authenticated `req.user.id`.
-- `PATCH /api/v1/profiles/me` requires a Supabase bearer token. It accepts one or more of `businessName`, `businessType`, `publicSlug`, `category`, `bio`, `location`, and `contactUrl`. The authenticated owner ID cannot be changed through the body.
-
-Example PATCH body:
-
-```json
-{
-  "businessName": "Amara Cakes and Bakes",
-  "bio": "Custom cakes and desserts"
-}
-```
-
-### Responses and ownership
-Both successful endpoints return HTTP 200 with the caller's profile and exclude `supabaseUserId`. A missing profile returns HTTP 404; invalid PATCH data returns HTTP 400; a duplicate public slug returns HTTP 409. Unauthenticated requests return HTTP 401.
-
-### Manual verification
-1. Authenticate as user A and read/update `/api/v1/profiles/me`; confirm the response matches A's profile.
-2. Include another user's ID in a PATCH body; confirm it is ignored and no other profile is changed.
-3. Authenticate as a user with no profile and call GET/PATCH; confirm HTTP 404.
-
----
-
-## Unit 7: Evidence Create and List
-
-### Create request
-`POST /api/v1/profiles/me/evidence` requires a Supabase bearer token.
+`POST /api/v1/profiles/me/evidence` accepts:
 
 ```json
 {
@@ -334,54 +42,25 @@ Both successful endpoints return HTTP 200 with the caller's profile and exclude 
 }
 ```
 
-`title`, `evidenceType` (`ORDER`, `PROJECT`, `DELIVERY`, `SERVICE`, or `OTHER`), and a valid `completedDate` are required. `description` and `customerName` are optional strings or `null`. The server selects the `BusinessProfile` using the authenticated user ID; the caller cannot supply the profile ID or verification status. New rows use the database's `SELF_REPORTED` default.
+`title`, `evidenceType` (`ORDER`, `PROJECT`, `DELIVERY`, `SERVICE`, or `OTHER`), and a valid `completedDate` are required. `description` and `customerName` are optional strings or `null`. Ownership and initial `SELF_REPORTED` status are set by the server.
 
-### Responses
-Creation returns HTTP 201 with the new evidence, including its `SELF_REPORTED` status. `GET /api/v1/profiles/me/evidence` returns only evidence belonging to the caller's profile, ordered by completion date descending. Both endpoints return HTTP 404 if the caller has no profile, HTTP 401 without valid authentication, and HTTP 400 for invalid create data.
+`GET /api/v1/profiles/me/evidence` returns only the authenticated owner's evidence ordered by completion date descending. Evidence create/list returns HTTP 404 if the user has no profile. Owner evidence responses may include the customer name; this field is never included in public responses.
 
-### Manual verification
-1. Create evidence for user A and confirm `verificationStatus` is `SELF_REPORTED`.
-2. List evidence as user A and confirm the new item appears.
-3. List evidence as user B and confirm user A's item is absent.
-4. Try to submit a different `businessProfileId` or `verificationStatus`; confirm neither field can change the ownership or default verification status.
+## Confirmation request
 
----
+`POST /api/v1/profiles/me/evidence/:id/confirmation-request` has no body. The evidence must belong to the authenticated owner. A token is generated using 32 cryptographically random bytes and expires seven days after issue. The HTTP 201 response contains the token and expiry; the owner shares the token with the intended customer. The token is not returned by public read or response endpoints.
 
-## Unit 8: Confirmation Request
+Reissuing an unconfirmed request rotates its token and expiry, invalidating the previous token. Confirmed evidence cannot be requested again. Evidence belonging to another user or an unknown ID returns HTTP 404.
 
-### Request
-`POST /api/v1/profiles/me/evidence/:evidenceId/confirmation-request` requires a Supabase bearer token and has no request body. The evidence must belong to the authenticated user. Each token is generated with 32 random bytes and expires seven days after issuance.
+## Customer confirmation
 
-### Response
-New requests and reissued pending/expired requests return HTTP 201:
-
-```json
-{
-  "data": {
-    "token": "<unguessable-token>",
-    "expiresAt": "..."
-  },
-  "error": null
-}
-```
-
-The owner must share the returned token with the intended confirmer. Unknown or other-user evidence returns HTTP 404; a previously confirmed item returns HTTP 409; missing/invalid authentication returns HTTP 401. Reissuing an unconfirmed request rotates its token and expiry, invalidating the previous link.
-
----
-
-## Unit 9: Public Confirmation Read
-
-### Request
-`GET /api/v1/confirmations/:token` is public and requires no authentication.
-
-### Responses
-A pending request returns HTTP 200 with a plain statement, state, and expiry. A confirmed request returns HTTP 200 with its statement and `CONFIRMED` state. Unknown tokens return HTTP 404 with state `UNKNOWN`; expired requests return HTTP 410 with state `EXPIRED`.
+`POST /api/v1/confirmations/:token` returns the statement needed to render the confirmation prompt:
 
 ```json
 {
   "data": {
     "kind": "available",
-    "state": "PENDING",
+    "state": "pending",
     "statement": "Did Amara Cakes complete \"Birthday cake order\" on 2026-09-20?",
     "expiresAt": "..."
   },
@@ -389,30 +68,35 @@ A pending request returns HTTP 200 with a plain statement, state, and expiry. A 
 }
 ```
 
-The response contains no owner email, Supabase user ID, confirmation token, or customer name. An expired GET reports effective expiry without mutating database state.
+Supported lifecycle states are `pending`, `confirmed`, `declined`, and `expired`. Unknown tokens return HTTP 404. Expired tokens return HTTP 410 and their pending request is marked expired. A consumed token cannot load the prompt again or accept another response; both calls return HTTP 409 with its terminal state.
 
----
-
-## Unit 10: Confirmation Action
-
-### Request
-`POST /api/v1/confirmations/:token/confirm` is public and accepts an optional confirmer name:
+`POST /api/v1/confirmations/:token/respond` accepts exactly one decision field:
 
 ```json
-{ "confirmerName": "Ada" }
+{ "decision": "confirmed" }
 ```
 
-### Behavior and responses
-A successful request atomically changes the confirmation request to `CONFIRMED` and its linked evidence to `CUSTOMER_CONFIRMED`, recording `confirmedAt` and the optional confirmer name. It returns HTTP 200. Unknown tokens return HTTP 404, expired links return HTTP 410, and already-confirmed/reused tokens return HTTP 409. Invalid confirmer data returns HTTP 400.
+The only supported decisions are `confirmed` and `declined`.
 
-The confirmation update is conditional on the request still being `PENDING` and unexpired, preventing concurrent/repeated requests from confirming the same token twice. No other evidence fields are changed.
+* `confirmed`: atomically marks the request `CONFIRMED`, records `confirmedAt`, and updates linked evidence to `CUSTOMER_CONFIRMED`.
+* `declined`: atomically marks the request `DECLINED` and records `declinedAt`. Linked evidence remains `SELF_REPORTED`.
 
----
+Successful responses return the lowercase state and `respondedAt`. Invalid decisions or payloads return HTTP 400. Unknown tokens return HTTP 404, expired tokens return HTTP 410, and already-used tokens return HTTP 409. The update is conditional on a pending, unexpired request, so concurrent responses cannot consume the token twice.
 
-## Unit 11: Public Profile
+## Public profile
 
-### Request
-`GET /api/v1/public/profiles/:slug` is public and requires no authentication.
+`GET /api/v1/public/profiles/:slug` returns only the profile's public slug, business name/type, category, bio, location, contact URL, and its customer-confirmed evidence (`title`, `description`, `evidenceType`, `completedDate`, and `verificationStatus`). Evidence is filtered to `CUSTOMER_CONFIRMED` in the database. Unknown slugs return HTTP 404.
 
-### Response
-HTTP 200 returns only the public slug, business name/type, category, bio, location, contact URL, and evidence fields needed to show customer-confirmed work (`title`, `description`, `evidenceType`, `completedDate`, `verificationStatus`). Evidence is filtered in the database to `CUSTOMER_CONFIRMED` only. Internal profile/evidence IDs, Supabase user ID, owner email, confirmation tokens, and customer names are never returned. Unknown slugs return HTTP 404.
+Public profile and confirmation responses never expose owner email, Supabase user IDs, customer names, confirmation tokens, private notes, internal profile/evidence IDs, or other unselected internal fields. Prisma queries use explicit selections for these responses.
+
+## Schema changes and verification
+
+Database migrations are additive. Previously applied migration files must not be changed. The follow-up migration `prisma/migrations/20261005000000_add_declined_confirmation/migration.sql` adds the `DECLINED` enum value and nullable `declinedAt` timestamp; the original confirmation migration remains unchanged.
+
+Run the backend build with:
+
+```sh
+npm run build
+```
+
+Before publishing, run `git diff --check` and the available trust-profile verification scripts. Verify owner scoping, public field selection, both customer decisions, response replay, and token expiry.

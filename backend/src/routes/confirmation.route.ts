@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { confirmRequest, getConfirmation } from '../controllers/confirmation.controller';
+import { getConfirmation, respondConfirmation } from '../controllers/confirmation.controller';
 
 const router = Router();
 
-router.get('/:token', getConfirmation);
-router.post('/:token/confirm', confirmRequest);
+router.post('/:token', getConfirmation);
+router.post('/:token/respond', respondConfirmation);
 
 export default router;

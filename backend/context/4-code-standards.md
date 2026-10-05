@@ -1,28 +1,19 @@
-# Code Standards
+# Backend Code Standards
 
-## TypeScript Conventions
-* Strict mode: `"strict": true`.
-* Avoid `any`. Use `unknown` for genuinely dynamic shapes, then narrow.
-* `interface` for object models, `type` for unions and aliases.
+## TypeScript and Express
+* Keep TypeScript strict; avoid `any` and narrow dynamic request payloads.
+* Routes define URLs and attach middleware/controllers.
+* Controllers validate HTTP input and shape responses.
+* Services own database queries and business rules.
+* Reuse the existing Supabase JWT middleware for authenticated routes.
 
-## Express (Backend) Structure
-* Routes: define endpoint URLs, attach to controllers. No business logic here.
-* Controllers: HTTP request parsing, response formatting, error catching.
-* Services: pure business logic and database queries. Keep isolated and testable.
-* Middlewares: JWT validation (the existing Supabase middleware), ownership checks, request sanitization.
+## Data and migrations
+* Preserve ownership relationships for profiles, evidence, and confirmation requests.
+* Generate confirmation tokens with a cryptographically secure random source.
+* Make migrations additive and never edit a migration that may already be applied.
+* Use explicit Prisma `select` clauses for public response data.
 
-## Data and Migration Rules
-* Build exactly the three required models, `BusinessProfile`, `Evidence`, and `ConfirmationRequest`, with the fields and enums defined in `2-architecture.md`.
-* Confirmation tokens must be unguessable and unique.
-* Migrations are additive only. Never delete or destroy old production data.
-* Never modify a migration file once it has been applied.
-
-## Git and Secrets
-* Never commit `.env` files, Supabase keys, database URLs, API keys, or archives.
-* Before every push, run `git diff --check`, `git status --short`, and the relevant build or test where the device supports it.
-* Environment variables are set only in the Render (backend) or Vercel (frontend) dashboards, never in Git.
-
-## Branch and Documentation Workflow
-* Work on `backend/trust-profile-api`, branched off `rebuild/trust-profile-mvp`.
-* Document every request, response, manual test, and migration command in `backend/TRUST_PROFILE_API.md`.
-* Open a PR into `rebuild/trust-profile-mvp`. Do not merge it; David reviews for data leakage, ownership rules, migration safety, and documentation clarity before merge.
+## Repository hygiene
+* Never commit environment files, credentials, database URLs, API keys, or archives.
+* Before publishing, run `git diff --check`, inspect `git status --short`, and run the relevant build and verification checks.
+* Document API and schema changes in `backend/TRUST_PROFILE_API.md`.

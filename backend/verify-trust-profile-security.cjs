@@ -5,7 +5,7 @@ const { randomUUID } = require("node:crypto");
 const { PrismaClient, BusinessType, EvidenceType } = require("@prisma/client");
 const { requireSupabaseAuth } = require("./src/middlewares/auth.middleware");
 const { getMyProfile, updateMyProfile, requestEvidenceConfirmation } = require("./src/controllers/profile.controller");
-const { confirmRequest, getConfirmation } = require("./src/controllers/confirmation.controller");
+const { getConfirmation, respondConfirmation } = require("./src/controllers/confirmation.controller");
 const { getPublicProfile } = require("./src/controllers/public-profile.controller");
 const profileRouter = require("./src/routes/profile.route").default;
 const confirmationRouter = require("./src/routes/confirmation.route").default;
@@ -54,10 +54,13 @@ async function run() {
       ["patch", "/me"],
       ["post", "/me/evidence"],
       ["get", "/me/evidence"],
-      ["post", "/me/evidence/:evidenceId/confirmation-request"],
+      ["post", "/me/evidence/:id/confirmation-request"],
     ]) {
       assertProtectedRoute(profileRouter, method, path);
     }
+
+    assert.ok(confirmationRouter.stack.some((layer) => layer.route?.path === "/:token" && layer.route.methods.post), "Missing POST /:token confirmation read route");
+    assert.ok(confirmationRouter.stack.some((layer) => layer.route?.path === "/:token/respond" && layer.route.methods.post), "Missing POST /:token/respond route");
 
     for (const router of [confirmationRouter, publicProfileRouter]) {
       for (const layer of router.stack.filter((candidate) => candidate.route)) {
@@ -125,7 +128,7 @@ async function run() {
 
     const crossOwnerConfirmation = await invoke(requestEvidenceConfirmation, {
       user: { id: userA },
-      params: { evidenceId: evidenceB.id },
+      params: { id: evidenceB.id },
       body: {},
     });
     assert.equal(crossOwnerConfirmation.statusCode, 404, "A caller must not request confirmation for another owner's evidence");
@@ -139,12 +142,41 @@ async function run() {
     assert.ok(!JSON.stringify(publicConfirmation.body).includes(userA));
     assert.ok(!JSON.stringify(publicConfirmation.body).includes("Private Customer"));
     assert.ok(!JSON.stringify(publicConfirmation.body).includes(pendingRequest.token));
+    assert.equal(publicConfirmation.body.data.state, "pending");
 
-    const firstConfirm = await invoke(confirmRequest, { params: { token: pendingRequest.token }, body: { confirmerName: "Confirmer" } });
+    const invalidDecision = await invoke(respondConfirmation, { params: { token: pendingRequest.token }, body: { decision: "maybe" } });
+    assert.equal(invalidDecision.statusCode, 400, "Unsupported decisions must be rejected");
+    const extraResponseField = await invoke(respondConfirmation, { params: { token: pendingRequest.token }, body: { decision: "confirmed", confirmerName: "Private Customer" } });
+    assert.equal(extraResponseField.statusCode, 400, "Confirmation responses must accept only a decision");
+
+    const firstConfirm = await invoke(respondConfirmation, { params: { token: pendingRequest.token }, body: { decision: "confirmed" } });
     assert.equal(firstConfirm.statusCode, 200);
-    const reusedConfirm = await invoke(confirmRequest, { params: { token: pendingRequest.token }, body: {} });
+    assert.equal(firstConfirm.body.data.state, "confirmed");
+    const reusedConfirm = await invoke(respondConfirmation, { params: { token: pendingRequest.token }, body: { decision: "declined" } });
     assert.equal(reusedConfirm.statusCode, 409, "A confirmed token must not be reusable");
+    assert.equal((await invoke(getConfirmation, { params: { token: pendingRequest.token }, body: {} })).statusCode, 409, "A used token must not load its confirmation prompt");
     assert.equal((await db.evidence.findUnique({ where: { id: evidenceA.id } })).verificationStatus, "CUSTOMER_CONFIRMED");
+
+    const declinedEvidence = await db.evidence.create({
+      data: {
+        businessProfileId: profileA.id,
+        title: "Declined work",
+        evidenceType: EvidenceType.SERVICE,
+        completedDate: new Date("2026-09-23T00:00:00Z"),
+      },
+    });
+    evidenceIds.push(declinedEvidence.id);
+    const declinedRequest = await db.confirmationRequest.create({
+      data: { evidenceId: declinedEvidence.id, token: randomUUID() + randomUUID(), expiresAt: new Date(Date.now() + 60_000) },
+    });
+    const firstDecline = await invoke(respondConfirmation, { params: { token: declinedRequest.token }, body: { decision: "declined" } });
+    assert.equal(firstDecline.statusCode, 200);
+    assert.equal(firstDecline.body.data.state, "declined");
+    const savedDecline = await db.confirmationRequest.findUnique({ where: { id: declinedRequest.id } });
+    assert.ok(savedDecline.declinedAt, "A decline response must be timestamped");
+    assert.equal((await db.evidence.findUnique({ where: { id: declinedEvidence.id } })).verificationStatus, "SELF_REPORTED");
+    assert.equal((await invoke(respondConfirmation, { params: { token: declinedRequest.token }, body: { decision: "confirmed" } })).statusCode, 409, "A declined token must not be reusable");
+    assert.equal((await invoke(getConfirmation, { params: { token: declinedRequest.token }, body: {} })).statusCode, 409, "A declined token must not load its confirmation prompt");
 
     const expiringEvidence = await db.evidence.create({
       data: {
@@ -159,7 +191,7 @@ async function run() {
       data: { evidenceId: expiringEvidence.id, token: randomUUID() + randomUUID(), expiresAt: new Date(Date.now() - 1000) },
     });
     assert.equal((await invoke(getConfirmation, { params: { token: expiredRequest.token }, body: {} })).statusCode, 410);
-    assert.equal((await invoke(confirmRequest, { params: { token: expiredRequest.token }, body: {} })).statusCode, 410);
+    assert.equal((await invoke(respondConfirmation, { params: { token: expiredRequest.token }, body: { decision: "confirmed" } })).statusCode, 410);
     assert.equal((await db.confirmationRequest.findUnique({ where: { id: expiredRequest.id } })).state, "EXPIRED");
 
     const publicProfile = await invoke(getPublicProfile, { params: { slug: profileA.publicSlug }, body: {} });
@@ -169,7 +201,7 @@ async function run() {
     assert.ok(!JSON.stringify(publicProfile.body).includes("Private Customer"));
     assert.ok(!JSON.stringify(publicProfile.body).includes(pendingRequest.token));
 
-    console.log("PASS: Unit 12 auth-route, profile/evidence ownership, expired/reused token, and public-data checks.");
+    console.log("PASS: Auth-route, profile/evidence ownership, confirmation decisions, replay/expiry, and public-data checks.");
   } catch (error) {
     failed = true;
     console.error(`FAIL: ${error.message}`);

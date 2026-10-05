@@ -106,7 +106,7 @@ export async function requestEvidenceConfirmation(req: Request, res: Response): 
     return;
   }
 
-  const evidenceId = req.params['evidenceId'];
+  const evidenceId = req.params['id'];
   if (!evidenceId) {
     res.status(400).json({ data: null, error: 'Evidence ID is required' });
     return;
