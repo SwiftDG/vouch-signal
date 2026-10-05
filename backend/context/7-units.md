@@ -26,7 +26,7 @@ Each unit is one atomic step: one PR-sized piece of work, testable and reviewabl
 * Scope: `POST /api/v1/profiles/onboard`. Creates a `BusinessProfile` for the authenticated user.
 * Done when: Idempotent, retrying the request with the same user never creates a duplicate profile.
 * Depends on: Unit 2.
-
+user
 ## Unit 6: Profile Read/Update Endpoints
 * Scope: `GET` and `PATCH /api/v1/profiles/me`.
 * Done when: Both endpoints validate ownership against the authenticated user and return only that user's own profile.
