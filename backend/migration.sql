@@ -75,4 +75,3 @@ ALTER TABLE "Evidence" ADD CONSTRAINT "Evidence_businessProfileId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "ConfirmationRequest" ADD CONSTRAINT "ConfirmationRequest_evidenceId_fkey" FOREIGN KEY ("evidenceId") REFERENCES "Evidence"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
