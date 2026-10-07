@@ -1,159 +1,128 @@
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ArrowDownRight, ArrowRight, Check, Menu, X } from "lucide-react";
 import ParticleBurst from "../components/ParticleBurst";
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  Check,
-  Fingerprint,
-  Link2,
-  ScanLine,
-  ShoppingBag,
-} from "lucide-react";
+import Brand from "../components/Brand";
 
-const cards = [
-  {
-    icon: Fingerprint,
-    title: "A business identity",
-    text: "One profile for who you are, what you do, and how long you have been active.",
-  },
-  {
-    icon: ScanLine,
-    title: "Evidence people can inspect",
-    text: "Separate owner-reported work from customer responses and show where each came from.",
-  },
-  {
-    icon: Link2,
-    title: "Proof you can carry",
-    text: "Share your Vouch link anywhere a new customer or partner needs confidence.",
-  },
+const reveal = {
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.2 },
+  transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+};
+
+const stages = [
+  { number: "01", title: "Start with a profile", detail: "Say what your business does and choose a link you can share." },
+  { number: "02", title: "Record completed work", detail: "Add an order or project. It starts as your own account of what happened." },
+  { number: "03", title: "Ask for a response", detail: "Send a one-use link to the customer. They can confirm or decline without an account." },
+  { number: "04", title: "Let the record speak", detail: "A public profile shows customer-confirmed work, with the source of that claim explained." },
 ];
 
-const steps = [
-  ["01", "Create", "Choose vendor or freelancer and introduce your business."],
-  ["02", "Add evidence", "Record completed orders, projects, and references."],
-  ["03", "Confirm", "Customers can respond to a short request link once this workflow is live."],
-  ["04", "Share", "Use your Vouch profile anywhere trust matters."],
-];
-
-function Logo() {
+function Header() {
+  const [open, setOpen] = useState(false);
   return (
-    <span className="font-['Bricolage_Grotesque'] text-2xl font-bold tracking-[-0.05em] text-white">
-      Vou<span className="text-[#ff735c]">ch</span>
-    </span>
+    <header className="site-header">
+      <div className="site-header-inner">
+        <Brand />
+        <nav className={open ? "site-nav is-open" : "site-nav"} aria-label="Main navigation">
+          <a href="#the-record" onClick={() => setOpen(false)}>The record</a>
+          <a href="#how-it-works" onClick={() => setOpen(false)}>How it works</a>
+          <a href="#why-vouch" onClick={() => setOpen(false)}>Why Vouch</a>
+          <Link to="/example/amara-cakes" onClick={() => setOpen(false)}>Example profile</Link>
+        </nav>
+        <div className="site-header-actions">
+          <Link className="text-link sign-in-link" to="/login">Sign in</Link>
+          <Link className="button button-primary button-small" to="/signup">Create profile <ArrowRight size={16} /></Link>
+        </div>
+        <button className="menu-toggle" type="button" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
+    </header>
   );
 }
 
-function ProfilePreview() {
-  const navigate = useNavigate();
-
+function ExampleRecord() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.2 }}
-      className="relative mx-auto w-full max-w-lg"
-    >
-      <div className="absolute -inset-12 bg-[#ff735c]/10 blur-[100px]" />
-      <div className="relative rounded-[30px] border border-white/10 bg-[#111722]/95 p-6 shadow-2xl shadow-black/50">
-        <div className="mb-8 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#ff735c] font-bold text-[#080b10]">AC</div>
-            <div>
-              <div className="flex items-center gap-1.5 font-semibold">Amara Cakes </div>
-              <p className="text-xs text-white/40">Online food vendor · Lagos</p>
-            </div>
-          </div>
-          <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/60">Example</span>
-        </div>
-        <div className="mb-7 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#ffb0a4]">Illustrative profile</p>
-          <p className="mt-3 text-sm leading-6 text-white/60">A buyer can see which records the owner added and which a customer responded to, without a made-up trust score.</p>
-        </div>
-        <div className="space-y-3">
-          {["Birthday cake order · Customer response shown", "Custom order · Owner reported"].map(label => <motion.div key={label} initial={{ opacity: 0, width: "75%" }} whileInView={{ opacity: 1, width: "100%" }} viewport={{ once: true }} transition={{ duration: 0.7 }} className="rounded-xl border border-white/10 bg-[#ff735c]/10 px-4 py-3 text-xs text-white/70">{label}</motion.div>)}
-        </div>
-        <button onClick={() => navigate("/example/amara-cakes")} className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] py-3.5 text-sm font-semibold transition hover:bg-white/10">
-          Open example profile <ArrowRight size={15} />
-        </button>
+    <div className="product-window" aria-label="Fictional Vouch profile preview">
+      <div className="window-top"><span className="window-dots"><i /><i /><i /></span><span>vouch / amara-cakes</span><span className="window-example">FICTIONAL EXAMPLE</span></div>
+      <div className="window-body">
+        <div className="window-identity"><div className="window-monogram">AC</div><div><span className="eyebrow">BUSINESS PROFILE</span><h3>Amara Cakes</h3><p>Cake maker · Lagos, Nigeria</p></div></div>
+        <div className="window-divider" />
+        <p className="window-section-label">Completed work shared publicly</p>
+        <div className="window-record"><span className="window-record-icon"><Check size={15} strokeWidth={2.5} /></span><div><strong>Birthday cake order</strong><small>12 September 2026 · Order</small></div><span className="window-record-status">Customer confirmed</span></div>
+        <div className="window-note"><span>What this means</span><p>The business added this record. Someone with its private link confirmed the description. Vouch has not verified that person's identity.</p></div>
       </div>
-    </motion.div>
+    </div>
+  );
+}
+
+function EvidenceComparison() {
+  return (
+    <div className="comparison-sheet">
+      <div className="comparison-head"><span>RECORD / 02</span><span>STATUS</span></div>
+      <div className="comparison-row"><div><strong>Custom celebration cake</strong><span>Added by Amara Cakes</span></div><span className="status-chip status-self">Self-reported</span></div>
+      <div className="comparison-row"><div><strong>Birthday cake order</strong><span>Added by Amara Cakes · customer response received</span></div><span className="status-chip status-confirmed">Customer confirmed</span></div>
+      <p className="comparison-caption">Fictional examples. A response is a record of a claim, not identity verification.</p>
+    </div>
   );
 }
 
 export default function HomePage() {
-  const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
+  const motionProps = reduceMotion ? {} : reveal;
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#080b10] text-white selection:bg-[#ff735c] selection:text-black">
-      <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-[#080b10]/75 px-5 backdrop-blur-xl md:px-12">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><Logo /></button>
-          <div className="hidden gap-8 text-sm text-white/50 md:flex">
-            <a href="#product" className="hover:text-white">Product</a>
-            <a href="#how" className="hover:text-white">How it works</a>
-            <a href="#for-who" className="hover:text-white">For businesses</a>
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/login")} className="hidden px-3 text-sm text-white/60 sm:block">Sign in</button>
-            <button onClick={() => navigate("/signup")} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#080b10] hover:bg-[#ff735c]">Create account</button>
-          </div>
-        </div>
-      </nav>
-
+    <div className="vouch-site">
+      <Header />
       <main>
-        <section className="relative px-5 pb-24 pt-36 md:px-12 md:pb-32 md:pt-48">
-          <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-[#ff735c]/[0.07] blur-[130px]" />
-          <div className="relative mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[1.05fr_.95fr]">
-            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-              <p className="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#ff806b]">Portable proof for independent businesses</p>
-              <h1 className="font-['Bricolage_Grotesque'] text-5xl font-semibold leading-[.98] tracking-[-0.055em] md:text-7xl lg:text-[84px]">
-                Your business is real.
-                <span className="block bg-gradient-to-r from-[#ff735c] to-[#ffb067] bg-clip-text text-transparent">Make it provable.</span>
-              </h1>
-              <p className="mt-7 max-w-xl text-base leading-7 text-white/55 md:text-lg">Vouch is being built to put completed work and customer responses in one shareable profile for vendors and freelancers.</p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <button onClick={() => navigate("/signup")} className="flex items-center justify-center gap-2 rounded-full bg-[#ff735c] px-7 py-4 text-sm font-semibold text-[#080b10] hover:bg-[#ff8d78]">Create an account <ArrowRight size={16} /></button>
-                <button onClick={() => navigate("/example/amara-cakes")} className="rounded-full border border-white/12 bg-white/[0.04] px-7 py-4 text-sm font-semibold hover:bg-white/[0.08]">View a fictional example</button>
-              </div>
-              <p className="mt-5 text-xs text-white/45">Choose what to publish; customer details should stay private.</p>
+        <section className="home-hero" aria-labelledby="home-title">
+          <div className="page-rail hero-grid">
+            <motion.div className="hero-copy" {...motionProps}>
+              <p className="eyebrow hero-eyebrow"><span className="eyebrow-rule" /> PORTABLE BUSINESS TRUST PROFILES</p>
+              <h1 id="home-title">Your work has a history.<br /><em>Give it a place to live.</em></h1>
+              <p className="hero-description">Vouch helps independent businesses record completed work, invite a customer response, and share a profile that shows what came from whom.</p>
+              <div className="hero-actions"><Link className="button button-primary" to="/signup">Create your profile <ArrowRight size={18} /></Link><Link className="button button-outline" to="/example/amara-cakes">Explore an example <ArrowDownRight size={18} /></Link></div>
+              <p className="hero-footnote">Built for vendors and freelancers. A customer can respond without creating an account.</p>
             </motion.div>
-            <ProfilePreview />
+            <motion.div className="hero-product" initial={reduceMotion ? false : { opacity: 0, y: 36, rotate: 1 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+              <ExampleRecord />
+              <span className="product-annotation">A record you can inspect, not a score you have to trust.</span>
+            </motion.div>
+          </div>
+          <div className="page-rail hero-bottom"><span>01 / THE IDEA</span><a href="#the-record">See how a record works <ArrowDownRight size={16} /></a></div>
+        </section>
+
+        <section className="thesis-band" id="the-record" aria-labelledby="record-heading">
+          <div className="page-rail thesis-grid">
+            <motion.div {...motionProps}><p className="eyebrow">THE RECORD</p><h2 id="record-heading">Screenshots tell a story.<br /><em>Provenance tells you more.</em></h2></motion.div>
+            <motion.div {...motionProps}><p>WhatsApp chats and Instagram highlights are useful, but a new buyer has to piece the story together. Vouch gives each completed job a clear status, so a viewer can distinguish what a business reported from what received a customer response.</p><p className="thesis-caveat">A confirmation does not establish identity, eliminate collusion, or guarantee future performance.</p></motion.div>
           </div>
         </section>
 
-        <section id="product" className="border-y border-white/8 bg-[#0c1119] px-5 py-24 md:px-12">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-14 max-w-3xl"><p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#ff735c]">The missing trust layer</p><h2 className="font-['Bricolage_Grotesque'] text-4xl font-semibold tracking-[-0.04em] md:text-6xl">Your reputation is scattered. Vouch brings the evidence together.</h2></div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {cards.map(({ icon: Icon, title, text }) => <article key={title} className="rounded-[28px] border border-white/8 bg-white/[0.025] p-7"><div className="mb-8 grid h-12 w-12 place-items-center rounded-2xl bg-[#ff735c]/10 text-[#ff735c]"><Icon /></div><h3 className="mb-3 text-xl font-semibold">{title}</h3><p className="text-sm leading-6 text-white/45">{text}</p></article>)}
-            </div>
+        <section className="evidence-section" aria-labelledby="evidence-heading">
+          <div className="page-rail evidence-grid">
+            <motion.div className="evidence-intro" {...motionProps}><p className="eyebrow">THE DIFFERENCE</p><h2 id="evidence-heading">The label changes<br />when the source does.</h2><p>Every record begins as self-reported. If a customer uses a private link to confirm the description, it can appear on the public profile as customer-confirmed. A decline leaves the record self-reported.</p><Link className="inline-link" to="/example/amara-cakes">See the fictional profile <ArrowRight size={17} /></Link></motion.div>
+            <motion.div {...motionProps}><EvidenceComparison /></motion.div>
           </div>
         </section>
 
-        <section id="how" className="px-5 py-24 md:px-12 md:py-32">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-14 text-center"><p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#ff735c]">How Vouch works</p><h2 className="font-['Bricolage_Grotesque'] text-4xl font-semibold tracking-[-0.04em] md:text-6xl">From activity to credible proof.</h2></div>
-            <div className="grid gap-px overflow-hidden rounded-[30px] border border-white/8 bg-white/8 md:grid-cols-4">
-              {steps.map(([number, title, text]) => <article key={number} className="min-h-60 bg-[#0b0f16] p-7"><span className="text-xs text-[#ff735c]">{number}</span><h3 className="mt-14 text-2xl font-semibold">{title}</h3><p className="mt-3 text-sm leading-6 text-white/45">{text}</p></article>)}
-            </div>
+        <motion.section className="journey-section" id="how-it-works" initial={reduceMotion ? false : { backgroundColor: "#1a1014" }} whileInView={{ backgroundColor: "#682b36" }} viewport={{ amount: 0.3, once: true }} transition={{ duration: 1.4 }} aria-labelledby="journey-heading">
+          <div className="journey-waves" aria-hidden="true"><span /><span /><span /><span /><span /><span /></div>
+          <div className="page-rail journey-content">
+            <motion.div {...motionProps}><p className="eyebrow eyebrow-light">A SIMPLE SEQUENCE</p><h2 id="journey-heading">From completed work<br />to a clearer decision.</h2><p>One link for the customer. One place for the next person to look.</p></motion.div>
+            <div className="journey-steps">{stages.map((stage) => <motion.article key={stage.number} {...motionProps}><span>{stage.number}</span><div><h3>{stage.title}</h3><p>{stage.detail}</p></div><ArrowDownRight size={20} aria-hidden="true" /></motion.article>)}</div>
           </div>
+        </motion.section>
+
+        <section className="audience-section" id="why-vouch" aria-labelledby="audience-heading">
+          <div className="page-rail"><p className="eyebrow">WHO IT IS FOR</p><h2 id="audience-heading">A history you can carry<br />beyond the last chat.</h2><div className="audience-grid"><article><span className="audience-index">01 / VENDORS</span><h3>When a new buyer asks if you have delivered before.</h3><p>Keep a shareable account of completed orders, with customer responses separated from your own records.</p></article><article><span className="audience-index">02 / FREELANCERS</span><h3>When past work lives across scattered platforms.</h3><p>Bring projects into one profile and ask clients to respond to a specific, plain-language description.</p></article><article><span className="audience-index">03 / VIEWERS</span><h3>When you need to know what the evidence actually says.</h3><p>Inspect the dates, work descriptions, and provenance before deciding whether to start a conversation.</p></article></div></div>
         </section>
 
-        <section id="for-who" className="px-5 pb-24 md:px-12 md:pb-32">
-          <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2">
-            {[
-              { icon: ShoppingBag, type: "For vendors", title: "Turn fulfilled orders into buyer confidence.", points: ["Share on WhatsApp and Instagram", "Request customer responses", "Show activity without exposing private payments"] },
-              { icon: BriefcaseBusiness, type: "For freelancers", title: "Carry your work history beyond one platform.", points: ["Request a response about completed work", "Combine references in one profile", "Share proof in proposals and applications"] },
-            ].map(({ icon: Icon, type, title, points }) => <article key={type} className="rounded-[32px] border border-white/8 bg-white/[0.035] p-8 md:p-10"><p className="mb-10 flex items-center gap-3 text-sm font-semibold text-[#ff8d78]"><Icon />{type}</p><h3 className="max-w-md text-3xl font-semibold tracking-[-0.035em] md:text-4xl">{title}</h3><div className="mt-8 space-y-4">{points.map(point => <p key={point} className="flex items-center gap-3 text-sm text-white/50"><Check size={16} className="text-[#7de2c3]" />{point}</p>)}</div></article>)}
-          </div>
-        </section>
-
-        <div className="hidden overflow-hidden opacity-30 motion-reduce:hidden lg:block" aria-hidden="true"><ParticleBurst /></div>
-        <section className="border-t border-white/8 px-5 py-24 text-center md:px-12 md:py-32"><div className="mx-auto max-w-3xl"><p className="mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#ff735c]">Start with what you have</p><h2 className="text-4xl font-semibold tracking-[-0.045em] md:text-6xl">Give your work a reputation that travels.</h2><p className="mx-auto mt-6 max-w-xl text-white/45">Start a profile and help us test whether clearer work history helps buyers decide.</p><button onClick={() => navigate("/signup")} className="mt-9 inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 text-sm font-semibold text-[#080b10] hover:bg-[#ff735c]">Create an account <ArrowRight size={16} /></button></div></section>
+        <section className="closing-section"><div className="page-rail closing-inner"><div><p className="eyebrow eyebrow-light">VOUCH IS STILL BEING TESTED</p><h2>Make your work easier<br />to understand.</h2><p>Start with one completed order or project. Share only what you are comfortable making public.</p><Link className="button button-light" to="/signup">Create your profile <ArrowRight size={18} /></Link></div><div className="closing-burst" aria-hidden="true"><ParticleBurst /></div></div></section>
       </main>
-
-      <footer className="border-t border-white/8 px-5 py-8 md:px-12"><div className="mx-auto flex max-w-7xl flex-col gap-4 text-xs text-white/30 sm:flex-row sm:items-center sm:justify-between"><Logo /><p>Portable proof for independent businesses.</p><p>© 2026 Vouch</p></div></footer>
+      <footer className="site-footer"><div className="page-rail footer-inner"><Brand /><p>Portable proof for independent businesses.</p><div><Link to="/example/amara-cakes">Fictional example</Link><Link to="/login">Sign in</Link></div><span>© 2026 Vouch</span></div></footer>
     </div>
   );
 }

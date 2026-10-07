@@ -3,9 +3,10 @@ import { supabase } from "./supabase";
 const base = import.meta.env.VITE_PROFILE_API_BASE_URL?.replace(/\/$/, "");
 
 export class ProfileApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, data) {
     super(message);
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -53,6 +54,7 @@ export async function profileRequest(
     throw new ProfileApiError(
       payload?.error || "This request could not be completed.",
       response.status,
+      payload?.data,
     );
   }
   return payload?.data;
