@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { profileRequest } from "../lib/profileApi";
+import Brand from "../components/Brand";
 
 const inputClass =
   "w-full rounded-xl border border-[#d9c7cb] bg-white px-4 py-3 text-[#24171a] focus-visible:outline-2 focus-visible:outline-[#a84551]";
@@ -66,6 +67,8 @@ export default function DashboardPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [confirmationLink, setConfirmationLink] = useState("");
+  const [confirmationExpiry, setConfirmationExpiry] = useState("");
+  const [requestingId, setRequestingId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -194,6 +197,8 @@ export default function DashboardPage() {
 
   async function requestConfirmation(recordId) {
     setMessage("");
+    setRequestingId(recordId);
+    setConfirmationLink("");
 
     try {
       const request = await profileRequest(
@@ -206,40 +211,39 @@ export default function DashboardPage() {
         }
       );
 
-      const link = `${window.location.origin}/confirm/${request.token}`;
+      const link = `${window.location.origin}/confirm/${encodeURIComponent(request.token)}`;
       setConfirmationLink(link);
+      setConfirmationExpiry(request.expiresAt || "");
 
       try {
         await navigator.clipboard.writeText(link);
-        setMessage("Confirmation link copied. It expires in seven days.");
+        setMessage("New customer link copied. Share it with the intended customer only. Creating another link invalidates this one.");
       } catch {
         setMessage("Confirmation link created. Copy it below before sharing.");
       }
     } catch (error) {
       setMessage(error.message);
+    } finally {
+      setRequestingId(null);
     }
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
-    navigate("/");
+    const { error } = await supabase.auth.signOut();
+    if (error) setMessage(error.message);
+    else navigate("/");
   }
 
   const profile = state.kind === "profile" ? state.profile : null;
 
   return (
-    <div className="min-h-screen bg-[#f8f3f1] text-[#24171a]">
-      <header className="border-b border-[#e5d8d8] bg-white px-5 py-5">
+    <div className="app-page dashboard-page">
+      <header className="app-header">
         <nav
-          className="mx-auto flex max-w-5xl items-center justify-between gap-4"
+          className="app-header-inner"
           aria-label="Account navigation"
         >
-          <Link
-            to="/"
-            className="font-['Bricolage_Grotesque'] text-2xl font-bold"
-          >
-            Vou<span className="text-[#a84551]">ch</span>
-          </Link>
+          <Brand />
 
           <button
             onClick={signOut}
@@ -250,7 +254,7 @@ export default function DashboardPage() {
         </nav>
       </header>
 
-      <main className="mx-auto max-w-5xl px-5 py-10 sm:py-16">
+      <main className="app-main">
         {state.kind === "loading" && <LoadingState />}
 
         {state.kind === "signed-out" && (
@@ -288,7 +292,7 @@ export default function DashboardPage() {
 
         {(state.kind === "empty" || profile) && (
           <>
-            <section className="max-w-2xl">
+            <section className="max-w-2xl dashboard-intro">
               <p className="text-sm font-semibold uppercase tracking-widest text-[#a84551]">
                 {profile ? "Your profile" : "Your first step"}
               </p>
@@ -301,6 +305,8 @@ export default function DashboardPage() {
                 Only publish details you are comfortable sharing. A profile
                 alone does not verify your identity or work.
               </p>
+
+              {message && <p role="status" className="app-alert dashboard-global-message">{message}</p>}
 
               <form
                 onSubmit={saveProfile}
@@ -425,25 +431,12 @@ export default function DashboardPage() {
                   </Link>
                 </div>
 
-                {message && (
-                  <p
-                    role="status"
-                    className="mt-6 rounded-xl bg-[#f8f3f1] p-4 text-sm text-[#6a565a]"
-                  >
-                    {message}
-                  </p>
-                )}
-
                 {confirmationLink && (
-                  <p className="mt-4 break-all rounded-xl border border-[#e5d8d8] p-4 text-sm">
-                    <span className="font-semibold">Customer link: </span>
-                    <a
-                      className="text-[#8b3541] underline"
-                      href={confirmationLink}
-                    >
-                      {confirmationLink}
-                    </a>
-                  </p>
+                  <div className="mt-4 break-all border border-[#e5d8d8] bg-[#f8f6f3] p-4 text-sm">
+                    <p className="font-semibold">Private customer link</p>
+                    <input className="app-input mt-2" aria-label="Private customer confirmation link" readOnly value={confirmationLink} onFocus={(event) => event.target.select()} />
+                    <p className="mt-2 text-xs text-[#6a565a]">{confirmationExpiry ? `Expires ${new Date(confirmationExpiry).toLocaleString()}. ` : ""}Anyone holding this link can respond once. Do not post it publicly.</p>
+                  </div>
                 )}
 
                 <div className="mt-7 divide-y divide-[#eadfdf] border-y border-[#eadfdf]">
@@ -475,10 +468,11 @@ export default function DashboardPage() {
 
                         {record.verificationStatus === "SELF_REPORTED" && (
                           <button
+                            disabled={requestingId !== null}
                             onClick={() => requestConfirmation(record.id)}
                             className="w-fit rounded-full border border-[#a84551] px-4 py-2 text-sm font-medium text-[#8b3541]"
                           >
-                            Request confirmation
+                            {requestingId === record.id ? "Creating link..." : "Create customer link"}
                           </button>
                         )}
                       </article>
@@ -489,6 +483,7 @@ export default function DashboardPage() {
                     </p>
                   )}
                 </div>
+                <p className="mt-3 text-xs leading-6 text-[#6a565a]">The owner view shows self-reported or customer-confirmed work. It does not yet show whether a customer link is pending, expired, or declined. Creating a new link invalidates an earlier unused link.</p>
 
                 <form
                   onSubmit={addEvidence}
@@ -562,7 +557,7 @@ export default function DashboardPage() {
                   </Field>
 
                   <div className="sm:col-span-2">
-                    <Field label="Description (optional)">
+                    <Field label="Description (optional, public if confirmed)">
                       <textarea
                         className={inputClass}
                         rows={3}
@@ -576,6 +571,7 @@ export default function DashboardPage() {
                         }
                       />
                     </Field>
+                    <p className="mt-2 text-xs leading-5 text-[#6a565a]">Describe the work without including a customer's private contact details.</p>
                   </div>
 
                   <button

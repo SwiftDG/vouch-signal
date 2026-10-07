@@ -1,191 +1,60 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { profileRequest } from "../lib/profileApi";
+import Brand from "../components/Brand";
 
 const example = {
-  publicSlug: "amara-cakes",
-  businessName: "Amara Cakes",
-  businessType: "VENDOR",
-  category: "Cake maker",
-  location: "Lagos, Nigeria",
-  bio: "An illustrative cake business profile. All names and records on this page are fictional.",
-  evidence: [
-    {
-      title: "Birthday cake order",
-      evidenceType: "ORDER",
-      completedDate: "2026-09-12",
-      verificationStatus: "CUSTOMER_CONFIRMED",
-    },
-  ],
+  publicSlug: "amara-cakes", businessName: "Amara Cakes", businessType: "VENDOR",
+  category: "Cake maker", location: "Lagos, Nigeria",
+  bio: "An illustrative cake business profile. All names and records here are fictional.",
+  evidence: [{ title: "Birthday cake order", evidenceType: "ORDER", completedDate: "2026-09-12", verificationStatus: "CUSTOMER_CONFIRMED" }],
 };
+
+function safeContact(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+  } catch { return null; }
+}
 
 export default function PublicProfilePage({ exampleMode = false }) {
   const { slug } = useParams();
+  return <ProfileContent key={exampleMode ? "example" : slug} slug={slug} exampleMode={exampleMode} />;
+}
 
-  const [state, setState] = useState(
-    exampleMode ? { kind: "ready", profile: example } : { kind: "loading" }
-  );
+function ProfileContent({ slug, exampleMode }) {
+  const [state, setState] = useState(exampleMode ? { kind: "ready", profile: example } : { kind: "loading" });
 
   useEffect(() => {
     if (exampleMode) return;
-
     const controller = new AbortController();
-
-    profileRequest(`/public/profiles/${encodeURIComponent(slug)}`, {
-      signal: controller.signal,
-    })
+    profileRequest(`/public/profiles/${encodeURIComponent(slug)}`, { signal: controller.signal })
       .then((profile) => setState({ kind: "ready", profile }))
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setState({
-            kind: error.status === 404 ? "missing" : "error",
-            message: error.message,
-          });
-        }
-      });
-
+      .catch((error) => { if (error.name !== "AbortError") setState({ kind: error.status === 404 ? "missing" : "error", message: error.message }); });
     return () => controller.abort();
   }, [slug, exampleMode]);
 
+  const profile = state.kind === "ready" ? state.profile : null;
+  const contact = profile?.contactUrl ? safeContact(profile.contactUrl) : null;
+  const records = profile?.evidence?.filter((record) => record.verificationStatus === "CUSTOMER_CONFIRMED") || [];
+
   return (
-    <div className="min-h-screen bg-[#080b10] px-5 py-8 text-white md:px-10">
-      <header className="mx-auto mb-10 flex max-w-4xl items-center justify-between">
-        <Link to="/" className="text-2xl font-bold">
-          Vou<span className="text-[#ff735c]">ch</span>
-        </Link>
-
-        <Link className="text-sm text-white/70 hover:text-white" to="/">
-          Home
-        </Link>
-      </header>
-
-      <main className="mx-auto max-w-4xl">
-        {state.kind === "loading" && (
-          <div role="status" className="animate-pulse space-y-5">
-            <div className="h-48 rounded-3xl bg-white/10" />
-            <div className="h-40 rounded-3xl bg-white/5" />
-            <span className="sr-only">Loading profile</span>
-          </div>
-        )}
-
-        {(state.kind === "missing" || state.kind === "error") && (
-          <section
-            role="alert"
-            className="rounded-3xl border border-white/10 bg-[#101620] p-8"
-          >
-            <h1 className="text-3xl font-semibold">
-              {state.kind === "missing"
-                ? "Profile not found"
-                : "Profile unavailable"}
-            </h1>
-
-            <p className="mt-4 text-white/60">
-              {state.kind === "missing"
-                ? "This profile does not exist or is not public."
-                : state.message}
-            </p>
-          </section>
-        )}
-
-        {state.kind === "ready" && (
-          <>
-            {exampleMode && (
-              <div className="mb-5 rounded-xl border border-[#ff735c]/40 bg-[#ff735c]/10 p-4 text-sm text-[#ffb0a4]">
-                <strong>Fictional example.</strong> This is a design
-                illustration. No customer, identity, order, or confirmation
-                shown here is real.
-              </div>
-            )}
-
-            <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[#101620]">
-              <div className="h-28 bg-[#481e29]" />
-
-              <div className="p-7 sm:p-10">
-                <p className="text-xs uppercase tracking-widest text-[#ff806b]">
-                  Business profile
-                </p>
-
-                <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
-                  {state.profile.businessName}
-                </h1>
-
-                <p className="mt-2 text-sm text-white/50">
-                  {state.profile.category ||
-                    (state.profile.businessType === "VENDOR"
-                      ? "Vendor"
-                      : "Freelancer")}
-                  {state.profile.location ? ` · ${state.profile.location}` : ""}
-                </p>
-
-                {state.profile.bio && (
-                  <p className="mt-6 max-w-2xl leading-7 text-white/70">
-                    {state.profile.bio}
-                  </p>
-                )}
-
-                {state.profile.contactUrl && (
-                  <a
-                    className="mt-5 inline-block text-sm text-[#ffb0a4] underline"
-                    href={state.profile.contactUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Contact this business
-                  </a>
-                )}
-              </div>
-            </section>
-
-            <section className="mt-5 rounded-[30px] border border-white/10 bg-[#101620] p-7 sm:p-10">
-              <h2 className="text-2xl font-semibold">
-                Customer-confirmed work
-              </h2>
-
-              <p className="mt-2 text-sm leading-6 text-white/50">
-                These records were added by the business and later confirmed by
-                a customer. A confirmation is not identity verification or a
-                guarantee of future work.
-              </p>
-
-              {state.profile.evidence?.length ? (
-                <ul className="mt-6 divide-y divide-white/10">
-                  {state.profile.evidence.map((record) => (
-                    <li
-                      key={`${record.title}-${record.completedDate}`}
-                      className="flex flex-col justify-between gap-2 py-5 sm:flex-row"
-                    >
-                      <div>
-                        <p className="font-medium">{record.title}</p>
-
-                        {record.description && (
-                          <p className="mt-2 text-sm text-white/60">
-                            {record.description}
-                          </p>
-                        )}
-
-                        <p className="mt-2 text-xs text-white/40">
-                          {record.evidenceType}
-                        </p>
-                      </div>
-
-                      <div className="text-sm text-[#ffb0a4]">
-                        <p>Customer confirmed</p>
-                        <p className="mt-1 text-xs text-white/40">
-                          {new Date(record.completedDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-6 rounded-xl border border-white/10 p-5 text-white/60">
-                  No customer-confirmed work has been shared yet.
-                </p>
-              )}
-            </section>
-          </>
-        )}
+    <div className="app-page public-page">
+      <header className="app-header"><nav className="app-header-inner" aria-label="Profile navigation"><Brand /><Link className="text-link" to="/"><ArrowLeft size={15} /> Home</Link></nav></header>
+      <main className="app-main public-main">
+        {state.kind === "loading" && <div role="status" aria-label="Loading public profile" className="public-loading"><div className="skeleton" /><div className="skeleton" /><span className="sr-only">Loading public profile</span></div>}
+        {(state.kind === "missing" || state.kind === "error") && <section className="app-panel app-panel-padding" role="alert"><p className="section-label">PUBLIC PROFILE</p><h1 className="app-title">{state.kind === "missing" ? "Profile not found" : "Profile unavailable"}</h1><p className="app-lede">{state.kind === "missing" ? "This profile does not exist or is not public." : state.message}</p><Link className="app-button" to="/">Return home</Link></section>}
+        {profile && <>
+          {exampleMode && <div className="app-alert public-example"><strong>Fictional example.</strong> This business, record, customer response, and date are illustrative. None is a real customer or verified order.</div>}
+          <div className="public-breadcrumb"><span>VOUCH / PUBLIC PROFILE</span><span>{profile.publicSlug}</span></div>
+          <section className="public-hero" aria-labelledby="profile-name"><span className="section-label">INDEPENDENT BUSINESS</span><h1 id="profile-name">{profile.businessName}</h1><p className="public-category">{profile.category || (profile.businessType === "VENDOR" ? "Vendor" : "Freelancer")}{profile.location ? ` · ${profile.location}` : ""}</p>{profile.bio && <p className="public-bio">{profile.bio}</p>}{contact && <a className="button button-light" href={contact} target="_blank" rel="noopener noreferrer">Visit contact link <ArrowUpRight size={17} /></a>}</section>
+          <div className="public-layout"><section className="public-records" aria-labelledby="records-heading"><div className="public-section-heading"><div><p className="section-label">THE RECORD</p><h2 id="records-heading">Customer-confirmed work</h2></div><span className="public-count">{records.length} {records.length === 1 ? "entry" : "entries"}</span></div>
+            {records.length ? <ol>{records.map((record, index) => <li key={`${record.title}-${record.completedDate}-${index}`} className="public-record"><span className="public-record-index">{String(index + 1).padStart(2, "0")}</span><div><h3>{record.title}</h3>{record.description && <p>{record.description}</p>}<small>{record.evidenceType?.toLowerCase()} · {new Date(record.completedDate).toLocaleDateString()}</small></div><span className="public-confirmed"><Check size={14} /> Customer confirmed</span></li>)}</ol> : <p className="public-empty">No customer-confirmed work is public yet. Self-reported records do not appear on this page.</p>}
+          </section><aside className="public-aside"><span className="section-label">READ THIS FIRST</span><h2>What does confirmed mean?</h2><p>The business recorded completed work. Someone with a private link responded that its description was accurate.</p><p>Vouch has not verified the respondent's identity. A response cannot guarantee future performance or rule out collusion.</p><div className="public-aside-rule" /><small>Customer names are private by default. Only confirmed records appear here.</small></aside></div>
+        </>}
       </main>
+      <footer className="public-footer"><div className="app-header-inner"><Brand /><span>A clearer record, not a trust score.</span></div></footer>
     </div>
   );
 }
