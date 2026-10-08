@@ -461,7 +461,7 @@ export default function DashboardPage() {
                           </div>
 
                           <p className="mt-1 text-sm text-[#6a565a]">
-                            {record.evidenceType.toLowerCase()} ·{" "}
+                            {record.evidenceType.toLowerCase()} completed {" "}
                             {new Date(`${record.completedDate.slice(0, 10)}T12:00:00`).toLocaleDateString()}
                           </p>
 

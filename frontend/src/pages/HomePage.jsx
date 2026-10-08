@@ -49,10 +49,10 @@ function ExampleRecord() {
     <div className="product-window" aria-label="Fictional Vouch profile preview">
       <div className="window-top"><span className="window-dots"><i /><i /><i /></span><span>Amara Cakes</span><span className="window-example">Illustrative profile</span></div>
       <div className="window-body">
-        <div className="window-identity"><div className="window-monogram">AC</div><div><span className="eyebrow">BUSINESS PROFILE</span><h3>Amara Cakes</h3><p>Cake maker · Lagos, Nigeria</p></div></div>
+        <div className="window-identity"><div className="window-monogram">AC</div><div><span className="eyebrow">BUSINESS PROFILE</span><h3>Amara Cakes</h3><p>Cake maker in Lagos, Nigeria</p></div></div>
         <div className="window-divider" />
         <p className="window-section-label">Completed work shared publicly</p>
-        <div className="window-record"><span className="window-record-icon"><Check size={15} strokeWidth={2.5} /></span><div><strong>Birthday cake order</strong><small>12 September 2026 · Order</small></div><span className="window-record-status">Customer confirmed</span></div>
+        <div className="window-record"><span className="window-record-icon"><Check size={15} strokeWidth={2.5} /></span><div><strong>Birthday cake order</strong><small>Order completed 12 September 2026</small></div><span className="window-record-status">Customer confirmed</span></div>
         <div className="window-note"><span>What this means</span><p>The business added this record. Someone with its private link confirmed the description. Vouch has not verified that person's identity.</p></div>
       </div>
     </div>
@@ -64,7 +64,7 @@ function EvidenceComparison() {
     <div className="comparison-sheet">
       <div className="comparison-head"><span>TWO RECORDS</span><span>STATUS</span></div>
       <div className="comparison-row"><div><strong>Custom celebration cake</strong><span>Added by Amara Cakes</span></div><span className="status-chip status-self">Self-reported</span></div>
-      <div className="comparison-row"><div><strong>Birthday cake order</strong><span>Added by Amara Cakes · customer response received</span></div><span className="status-chip status-confirmed">Customer confirmed</span></div>
+      <div className="comparison-row"><div><strong>Birthday cake order</strong><span>Added by Amara Cakes. Customer response received.</span></div><span className="status-chip status-confirmed">Customer confirmed</span></div>
       <p className="comparison-caption">Fictional examples. A response is a record of a claim, not identity verification.</p>
     </div>
   );
