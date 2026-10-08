@@ -172,6 +172,24 @@ export default function DashboardPage() {
         isNew ? "Your profile is ready." : "Your profile was updated."
       );
     } catch (error) {
+      if (error.status === 503) {
+        // The browser may lose a response after the server saves the profile.
+        // Read it back before inviting another submission.
+        try {
+          const saved = await profileRequest("/profiles/me", { authenticated: true });
+          if (saved) {
+            setProfileForm({ ...emptyProfile, ...saved });
+            setState({ kind: "profile", profile: saved });
+            setMessage("Your profile is ready.");
+            return;
+          }
+        } catch (checkError) {
+          if (checkError.status === 404) {
+            setMessage("Your profile was not saved. Please try again.");
+            return;
+          }
+        }
+      }
       setMessage(error.message);
     } finally {
       setBusy(false);

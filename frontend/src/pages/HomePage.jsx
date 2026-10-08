@@ -81,13 +81,14 @@ export default function HomePage() {
         <section className="home-hero" aria-labelledby="home-title">
           <div className="page-rail hero-grid">
             <motion.div className="hero-copy" {...motionProps}>
-              <p className="eyebrow hero-eyebrow"><span className="eyebrow-rule" /> PORTABLE BUSINESS TRUST PROFILES</p>
+              <p className="eyebrow hero-eyebrow">PORTABLE BUSINESS TRUST PROFILES</p>
               <h1 id="home-title">Your work has a history.<br /><em>Give it a place to live.</em></h1>
               <p className="hero-description">Vouch helps independent businesses record completed work, invite a customer response, and share a profile that shows what came from whom.</p>
               <div className="hero-actions"><Link className="button button-primary" to="/signup">Create your profile <ArrowRight size={18} /></Link><Link className="button button-outline" to="/example/amara-cakes">Explore an example <ArrowDownRight size={18} /></Link></div>
               <p className="hero-footnote">Built for vendors and freelancers. A customer can respond without creating an account.</p>
             </motion.div>
             <motion.div className="hero-product" initial={reduceMotion ? false : { opacity: 0, y: 36, rotate: 1 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+              <figure className="hero-photo"><img src="/images/vouch-order.webp" alt="A boxed celebration cake on a baker’s worktable" /><figcaption>Illustrative image</figcaption></figure>
               <ExampleRecord />
               <span className="product-annotation">A record you can inspect, not a score you have to trust.</span>
             </motion.div>
