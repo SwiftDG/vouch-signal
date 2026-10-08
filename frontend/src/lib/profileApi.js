@@ -1,6 +1,10 @@
 import { supabase } from "./supabase";
 
-const base = import.meta.env.VITE_PROFILE_API_BASE_URL?.replace(/\/$/, "");
+// Use the same origin in production so mobile browsers only need to reach Vouch.
+// Vercel forwards /api/v1 to the existing Render service.
+const base = import.meta.env.PROD
+  ? "/api/v1"
+  : import.meta.env.VITE_PROFILE_API_BASE_URL?.replace(/\/$/, "");
 
 export class ProfileApiError extends Error {
   constructor(message, status, data) {
