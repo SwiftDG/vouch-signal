@@ -22,4 +22,4 @@ Obtain a lawful consent-based transaction source; design identity and merchant c
 
 ## Photograph
 
-The cropped market photograph in `frontend/public/images/abuja-stall-crop.webp` is from [Muhammad-Taha Ibrahim on Pexels](https://www.pexels.com/photo/local-nigerian-market-stall-with-packaged-goods-30730008/). It depicts a stall in Abuja and is not Mama Ngozi's business. Cropped to show the goods without a person.
+The cropped market photograph in `frontend/public/images/abuja-stall-crop.webp` is from [Muhammad-Taha Ibrahim on Pexels](https://www.pexels.com/photo/local-nigerian-market-stall-with-packaged-goods-30730008/). It depicts a stall in Abuja and is not Mama Ngozi's business. Cropped to show the goods without a person. The produce photograph in `frontend/public/images/jos-market-fruit.webp` is by [Jagaba Denis on Pexels](https://www.pexels.com/photo/fresh-tropical-fruits-display-at-nigerian-market-37126254/). It depicts a market stall in Jos and is cropped to exclude the edge of a person.
