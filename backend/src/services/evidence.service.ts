@@ -19,6 +19,9 @@ const evidenceSelect = {
   completedDate: true,
   customerName: true,
   verificationStatus: true,
+  confirmationRequest: {
+    select: { state: true, expiresAt: true, confirmedAt: true, declinedAt: true },
+  },
   createdAt: true,
   updatedAt: true,
 };

@@ -13,7 +13,7 @@ The backend supports business profile onboarding and updates, evidence records, 
 | `GET` | `/api/v1/profiles/me/evidence` | Authenticated owner |
 | `POST` | `/api/v1/profiles/me/evidence/:id/confirmation-request` | Authenticated owner |
 | `GET` | `/api/v1/public/profiles/:slug` | Public |
-| `POST` | `/api/v1/confirmations/:token` | Public |
+| `GET` | `/api/v1/confirmations/:token` | Public |
 | `POST` | `/api/v1/confirmations/:token/respond` | Public |
 
 Every owner route uses Supabase JWT authentication. Profile and evidence queries are scoped to the authenticated user's `req.user.id`; clients cannot select another owner's record by supplying a user ID.
@@ -44,17 +44,17 @@ The profile responses exclude `supabaseUserId`. Missing profiles return HTTP 404
 
 `title`, `evidenceType` (`ORDER`, `PROJECT`, `DELIVERY`, `SERVICE`, or `OTHER`), and a valid `completedDate` are required. `description` and `customerName` are optional strings or `null`. Ownership and initial `SELF_REPORTED` status are set by the server.
 
-`GET /api/v1/profiles/me/evidence` returns only the authenticated owner's evidence ordered by completion date descending. Evidence create/list returns HTTP 404 if the user has no profile. Owner evidence responses may include the customer name; this field is never included in public responses.
+`GET /api/v1/profiles/me/evidence` returns only the authenticated owner's evidence ordered by completion date descending. It includes the request state and timestamps when a request exists, but never its token. A pending request past `expiresAt` should be displayed as expired even before its state is updated on read. Evidence create/list returns HTTP 404 if the user has no profile. Owner evidence responses may include the customer name; this field is never included in public responses.
 
 ## Confirmation request
 
 `POST /api/v1/profiles/me/evidence/:id/confirmation-request` has no body. The evidence must belong to the authenticated owner. A token is generated using 32 cryptographically random bytes and expires seven days after issue. The HTTP 201 response contains the token and expiry; the owner shares the token with the intended customer. The token is not returned by public read or response endpoints.
 
-Reissuing an unconfirmed request rotates its token and expiry, invalidating the previous token. Confirmed evidence cannot be requested again. Evidence belonging to another user or an unknown ID returns HTTP 404.
+Reissuing a pending or expired request rotates its token and expiry, invalidating the previous token. Confirmed and declined evidence cannot be requested again; a decline remains in the audit record. Evidence belonging to another user or an unknown ID returns HTTP 404.
 
 ## Customer confirmation
 
-`POST /api/v1/confirmations/:token` returns the statement needed to render the confirmation prompt:
+`GET /api/v1/confirmations/:token` returns the statement needed to render the confirmation prompt:
 
 ```json
 {
@@ -93,10 +93,11 @@ Public profile and confirmation responses never expose owner email, Supabase use
 
 Database migrations are additive. Previously applied migration files must not be changed. The follow-up migration `prisma/migrations/20261005000000_add_declined_confirmation/migration.sql` adds the `DECLINED` enum value and nullable `declinedAt` timestamp; the original confirmation migration remains unchanged.
 
-Run the backend build with:
+Run the backend build and the database-backed security check against an isolated test database with the migrations applied:
 
 ```sh
 npm run build
+npm run verify:security
 ```
 
 Before publishing, run `git diff --check` and the available trust-profile verification scripts. Verify owner scoping, public field selection, both customer decisions, response replay, and token expiry.

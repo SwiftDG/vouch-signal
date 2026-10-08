@@ -3,13 +3,13 @@ require("dotenv").config({ quiet: true });
 const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const { PrismaClient, BusinessType, EvidenceType } = require("@prisma/client");
-const { requireSupabaseAuth } = require("./src/middlewares/auth.middleware");
-const { getMyProfile, updateMyProfile, requestEvidenceConfirmation } = require("./src/controllers/profile.controller");
-const { getConfirmation, respondConfirmation } = require("./src/controllers/confirmation.controller");
-const { getPublicProfile } = require("./src/controllers/public-profile.controller");
-const profileRouter = require("./src/routes/profile.route").default;
-const confirmationRouter = require("./src/routes/confirmation.route").default;
-const publicProfileRouter = require("./src/routes/public-profile.route").default;
+const { requireSupabaseAuth } = require("./dist/middlewares/auth.middleware");
+const { getMyProfile, getMyEvidence, updateMyProfile, requestEvidenceConfirmation } = require("./dist/controllers/profile.controller");
+const { getConfirmation, respondConfirmation } = require("./dist/controllers/confirmation.controller");
+const { getPublicProfile } = require("./dist/controllers/public-profile.controller");
+const profileRouter = require("./dist/routes/profile.route").default;
+const confirmationRouter = require("./dist/routes/confirmation.route").default;
+const publicProfileRouter = require("./dist/routes/public-profile.route").default;
 
 const db = new PrismaClient();
 const runId = randomUUID();
@@ -59,7 +59,7 @@ async function run() {
       assertProtectedRoute(profileRouter, method, path);
     }
 
-    assert.ok(confirmationRouter.stack.some((layer) => layer.route?.path === "/:token" && layer.route.methods.post), "Missing POST /:token confirmation read route");
+    assert.ok(confirmationRouter.stack.some((layer) => layer.route?.path === "/:token" && layer.route.methods.get), "Missing GET /:token confirmation read route");
     assert.ok(confirmationRouter.stack.some((layer) => layer.route?.path === "/:token/respond" && layer.route.methods.post), "Missing POST /:token/respond route");
 
     for (const router of [confirmationRouter, publicProfileRouter]) {
@@ -177,6 +177,13 @@ async function run() {
     assert.equal((await db.evidence.findUnique({ where: { id: declinedEvidence.id } })).verificationStatus, "SELF_REPORTED");
     assert.equal((await invoke(respondConfirmation, { params: { token: declinedRequest.token }, body: { decision: "confirmed" } })).statusCode, 409, "A declined token must not be reusable");
     assert.equal((await invoke(getConfirmation, { params: { token: declinedRequest.token }, body: {} })).statusCode, 409, "A declined token must not load its confirmation prompt");
+    const retryDeclined = await invoke(requestEvidenceConfirmation, { user: { id: userA }, params: { id: declinedEvidence.id }, body: {} });
+    assert.equal(retryDeclined.statusCode, 409, "A declined request must not be reset");
+    assert.equal((await db.confirmationRequest.findUnique({ where: { id: declinedRequest.id } })).declinedAt.getTime(), savedDecline.declinedAt.getTime(), "Decline timestamp must remain intact");
+    const ownerEvidence = await invoke(getMyEvidence, { user: { id: userA }, params: {}, body: {} });
+    assert.equal(ownerEvidence.statusCode, 200);
+    assert.equal(ownerEvidence.body.data.find((record) => record.id === declinedEvidence.id).confirmationRequest.state, "DECLINED");
+    assert.ok(!JSON.stringify(ownerEvidence.body).includes(declinedRequest.token), "Owner evidence list must not expose confirmation tokens");
 
     const expiringEvidence = await db.evidence.create({
       data: {

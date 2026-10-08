@@ -21,27 +21,46 @@ export async function createConfirmationRequest(supabaseUserId: string, evidence
     if (evidence.confirmationRequest?.state === ConfirmationState.CONFIRMED) {
       return { kind: 'already-confirmed' as const };
     }
+    if (evidence.confirmationRequest?.state === ConfirmationState.DECLINED) {
+      return { kind: 'declined' as const };
+    }
 
     const now = new Date();
     const token = randomBytes(32).toString('base64url');
     const expiresAt = new Date(now.getTime() + confirmationLifetimeMs);
-    const request = evidence.confirmationRequest
-      ? await transaction.confirmationRequest.update({
+    let request;
+    if (evidence.confirmationRequest) {
+      const changed = await transaction.confirmationRequest.updateMany({
+        where: {
+          id: evidence.confirmationRequest.id,
+          state: { in: [ConfirmationState.PENDING, ConfirmationState.EXPIRED] },
+        },
+        data: {
+          token,
+          state: ConfirmationState.PENDING,
+          expiresAt,
+          confirmerName: null,
+          confirmedAt: null,
+          declinedAt: null,
+        },
+      });
+      if (changed.count !== 1) {
+        const current = await transaction.confirmationRequest.findUnique({
           where: { id: evidence.confirmationRequest.id },
-          data: {
-            token,
-            state: ConfirmationState.PENDING,
-            expiresAt,
-            confirmerName: null,
-            confirmedAt: null,
-            declinedAt: null,
-          },
-          select: { token: true, expiresAt: true },
-        })
-      : await transaction.confirmationRequest.create({
-          data: { evidenceId: evidence.id, token, expiresAt },
-          select: { token: true, expiresAt: true },
+          select: { state: true },
         });
+        if (current?.state === ConfirmationState.DECLINED) {
+          return { kind: 'declined' as const };
+        }
+        return { kind: 'already-confirmed' as const };
+      }
+      request = { token, expiresAt };
+    } else {
+      request = await transaction.confirmationRequest.create({
+        data: { evidenceId: evidence.id, token, expiresAt },
+        select: { token: true, expiresAt: true },
+      });
+    }
 
     return { kind: 'created' as const, request };
   });

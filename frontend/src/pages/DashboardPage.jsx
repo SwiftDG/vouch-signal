@@ -42,8 +42,13 @@ function Field({ label, children }) {
   );
 }
 
-function Status({ value }) {
-  const confirmed = value === "CUSTOMER_CONFIRMED";
+function Status({ record }) {
+  const confirmed = record.verificationStatus === "CUSTOMER_CONFIRMED";
+  const request = record.confirmationRequest;
+  const requestState = request?.state === "PENDING" && new Date(request.expiresAt) <= new Date()
+    ? "EXPIRED"
+    : request?.state;
+  const label = confirmed ? "Customer confirmed" : requestState === "PENDING" ? "Awaiting response" : requestState === "DECLINED" ? "Customer declined" : requestState === "EXPIRED" ? "Link expired" : "Self-reported";
 
   return (
     <span
@@ -53,7 +58,7 @@ function Status({ value }) {
           : "text-xs font-medium text-[#8b3541]"
       }
     >
-      {confirmed ? "Customer confirmed" : "Self-reported"}
+      {label}
     </span>
   );
 }
@@ -214,6 +219,9 @@ export default function DashboardPage() {
       const link = `${window.location.origin}/confirm/${encodeURIComponent(request.token)}`;
       setConfirmationLink(link);
       setConfirmationExpiry(request.expiresAt || "");
+      setEvidence((current) => current.map((record) => record.id === recordId
+        ? { ...record, confirmationRequest: { state: "PENDING", expiresAt: request.expiresAt } }
+        : record));
 
       try {
         await navigator.clipboard.writeText(link);
@@ -449,7 +457,7 @@ export default function DashboardPage() {
                         <div>
                           <div className="flex flex-wrap items-center gap-3">
                             <h3 className="font-semibold">{record.title}</h3>
-                            <Status value={record.verificationStatus} />
+                            <Status record={record} />
                           </div>
 
                           <p className="mt-1 text-sm text-[#6a565a]">
@@ -466,13 +474,13 @@ export default function DashboardPage() {
                           )}
                         </div>
 
-                        {record.verificationStatus === "SELF_REPORTED" && (
+                        {record.verificationStatus === "SELF_REPORTED" && record.confirmationRequest?.state !== "DECLINED" && (
                           <button
                             disabled={requestingId !== null}
                             onClick={() => requestConfirmation(record.id)}
                             className="w-fit rounded-full border border-[#a84551] px-4 py-2 text-sm font-medium text-[#8b3541]"
                           >
-                            {requestingId === record.id ? "Creating link..." : "Create customer link"}
+                            {requestingId === record.id ? "Creating link..." : record.confirmationRequest?.state === "PENDING" && new Date(record.confirmationRequest.expiresAt) > new Date() ? "Replace customer link" : "Create customer link"}
                           </button>
                         )}
                       </article>
@@ -483,7 +491,7 @@ export default function DashboardPage() {
                     </p>
                   )}
                 </div>
-                <p className="mt-3 text-xs leading-6 text-[#6a565a]">The owner view shows self-reported or customer-confirmed work. It does not yet show whether a customer link is pending, expired, or declined. Creating a new link invalidates an earlier unused link.</p>
+                <p className="mt-3 text-xs leading-6 text-[#6a565a]">Only confirmed work appears on your public profile. A decline stays recorded and cannot be reset. Replacing a pending link invalidates the earlier link.</p>
 
                 <form
                   onSubmit={addEvidence}

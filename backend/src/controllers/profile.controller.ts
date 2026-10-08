@@ -122,6 +122,10 @@ export async function requestEvidenceConfirmation(req: Request, res: Response): 
       res.status(409).json({ data: null, error: 'This evidence has already been confirmed' });
       return;
     }
+    if (result.kind === 'declined') {
+      res.status(409).json({ data: null, error: 'This record was declined. Its response cannot be reset.' });
+      return;
+    }
     res.status(201).json({
       data: { token: result.request.token, expiresAt: result.request.expiresAt },
       error: null,
