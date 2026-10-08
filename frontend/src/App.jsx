@@ -9,6 +9,7 @@ import {
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import DemoPage from "./pages/DemoPage";
 import SignupPage from "./pages/Signup";
 import PageNotFound from "./pages/PageNotFound";
 import { supabase } from "./lib/supabase";
@@ -77,6 +78,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>

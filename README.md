@@ -1,10 +1,12 @@
 # Vouch
 
-Vouch explores whether a small business's consented payment history could help a lender understand its trading pattern. It does not offer loans. A lender would make its own decision.
+Vouch reads a merchant's supplied payment records for days with sales, distinct named payers, returning payers and the length of activity. It flags simple circular, repeated and rapid-outflow patterns. The public application is usable after sign-in: import a CSV or enter transactions and inspect a score breakdown. Transactions are held in browser memory for the current session and are not sent to Vouch.
 
-## Current site
+This is an **activity summary based on user-provided records**. It does not independently verify a bank statement, determine creditworthiness, connect to a lender or approve a loan. A lender needs verified, consented records and its own assessment. The presenter walkthrough at `/demo` is separate from the signed-in application and is linked only from the sign-in page.
 
-The home page explains the idea. `/dashboard` is a self-contained interactive example: start with a zero score, load a month of sample sales, then try three patterns that the illustrative rules ignore. The sample is fictional. No bank account, transaction provider, or lender is connected. Google sign-in is available, but it does not import account activity or create a real score.
+## CSV format
+
+Download the template from the dashboard. It accepts `date,direction,amount,counterparty,description` (description optional), or separate credit and debit columns. Dates may be `YYYY-MM-DD` or `DD/MM/YYYY`. Named payer data is required for customer-diversity measures. An uploaded file replaces the activity in the tab; reloading or closing clears it.
 
 ## Run locally
 
@@ -14,12 +16,12 @@ npm ci
 npm run dev
 ```
 
-The independent `backend` has a `/api/v1/health` endpoint and returns JSON 404 for other API paths. It does not process money. The frontend demo does not depend on it.
+The independent backend exposes `/api/v1/health` and has no payment operation. The frontend does not depend on it.
 
 ## Production work still needed
 
-Obtain a lawful consent-based transaction source; design identity and merchant controls; test the rules on permitted data; assess fraud, accuracy, bias, security and regulatory requirements with prospective lenders. The illustrative score must not be presented as validated creditworthiness.
+A permitted consent-based transaction source, verified payer identity, storage controls, security review, lender testing, and model validation are necessary before a bank can use these signals. Do not describe this score as verified creditworthiness.
 
-## Photograph
+## Photographs
 
-The cropped market photograph in `frontend/public/images/abuja-stall-crop.webp` is from [Muhammad-Taha Ibrahim on Pexels](https://www.pexels.com/photo/local-nigerian-market-stall-with-packaged-goods-30730008/). It depicts a stall in Abuja and is not Mama Ngozi's business. Cropped to show the goods without a person. The produce photograph in `frontend/public/images/jos-market-fruit.webp` is by [Jagaba Denis on Pexels](https://www.pexels.com/photo/fresh-tropical-fruits-display-at-nigerian-market-37126254/). It depicts a market stall in Jos and is cropped to exclude the edge of a person.
+The cropped market photograph `frontend/public/images/abuja-stall-crop.webp` is from [Muhammad-Taha Ibrahim on Pexels](https://www.pexels.com/photo/local-nigerian-market-stall-with-packaged-goods-30730008/). The produce photograph `frontend/public/images/jos-market-fruit.webp` is by [Jagaba Denis on Pexels](https://www.pexels.com/photo/fresh-tropical-fruits-display-at-nigerian-market-37126254/). Neither depicts an actual Vouch user.

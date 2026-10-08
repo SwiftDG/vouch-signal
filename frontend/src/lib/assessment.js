@@ -1,4 +1,4 @@
-// An illustrative rule set for a deterministic, local demo. It is not a credit model.
+// Rule-based activity summary. User-provided records are not verified bank data.
 const at = (day, hour = 10, minute = 0) => new Date(2026, 8, day, hour, minute).getTime();
 
 export const sampleActivity = [
@@ -36,20 +36,21 @@ export function assess(rows) {
   for (const row of inbound) {
     const circular = outbound.some(out => out.sender === row.sender && out.amount >= row.amount * .9 && out.time > row.time && out.time - row.time <= 3600000);
     const passed = outbound.some(out => out.sender !== row.sender && out.amount >= row.amount * .9 && out.amount <= row.amount * 1.1 && out.time > row.time && out.time - row.time <= 3600000);
-    const repeated = kept.some(prev => prev.sender === row.sender && prev.day === row.day && Math.abs(prev.time - row.time) <= 3600000);
+    const repeated = kept.some(prev => prev.sender === row.sender && new Date(prev.time).toDateString() === new Date(row.time).toDateString() && Math.abs(prev.time - row.time) <= 3600000);
     if (circular || passed || repeated) ignored.push({ ...row, reason: circular ? 'Returned to the same account' : passed ? 'Money moved straight out' : 'Same customer within an hour' });
     else kept.push(row);
   }
-  const customers = new Set(kept.map(r => r.sender));
-  const days = new Set(kept.map(r => r.day));
-  const counts = [...customers].map(sender => kept.filter(r => r.sender === sender).length);
+  const knownPayers = kept.filter(r => r.reliableParty !== false);
+  const customers = new Set(knownPayers.map(r => r.sender));
+  const days = new Set(kept.map(r => new Date(r.time).toDateString()));
+  const counts = [...customers].map(sender => knownPayers.filter(r => r.sender === sender).length);
   const returning = counts.filter(n => n > 1).length;
-  const span = kept.length ? Math.max(...kept.map(r => r.day)) - Math.min(...kept.map(r => r.day)) + 1 : 0;
+  const span = kept.length ? Math.floor((Math.max(...kept.map(r => r.time)) - Math.min(...kept.map(r => r.time))) / 86400000) + 1 : 0;
   const breakdown = {
     tradingDays: Math.min(days.size * 12, 180),
     customers: Math.min(customers.size * 18, 180),
     returning: Math.min(returning * 28, 140),
     history: Math.min(span * 4, 120),
   };
-  return { score: Object.values(breakdown).reduce((a, b) => a + b, 0), breakdown, customers: customers.size, returning, days: days.size, span, kept, ignored };
+  return { score: Object.values(breakdown).reduce((a, b) => a + b, 0), breakdown, customers: customers.size, returning, days: days.size, span, kept, ignored, missingPayer: kept.length - knownPayers.length };
 }
