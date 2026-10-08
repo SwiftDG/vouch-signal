@@ -36,8 +36,16 @@ export default function DashboardPage() {
     if (file.size > 2_000_000) { setError('Choose a CSV smaller than 2 MB.'); return; }
     try {
       const parsed = importActivity(await file.text());
-      setRows(parsed);
-      setMessage(`${parsed.length} records loaded from ${file.name}. Your file stays in this browser tab and is cleared when you leave or reload.`);
+      const key = row => [row.time, row.direction, row.amount, row.sender, row.description].join('|');
+      const known = new Set(rows.map(key));
+      const added = parsed.filter(row => {
+        const identity = key(row);
+        if (known.has(identity)) return false;
+        known.add(identity);
+        return true;
+      });
+      setRows(current => [...current, ...added.map((row, index) => ({ ...row, id: `file-${Date.now()}-${index}`, source: file.name }))]);
+      setMessage(`${added.length} new records added from ${file.name}. ${parsed.length - added.length} exact duplicates skipped. You can add another statement from a different account. Records clear when you reload.`);
     } catch (parseError) { setError(parseError.message); }
   };
   const addManual = event => {
@@ -61,10 +69,10 @@ export default function DashboardPage() {
   if (checking || !user) return <main className="vouch-site loading-screen">Opening your account…</main>;
   return <main className="vouch-site account-site">
     <header className="site-nav"><Link to="/" className="wordmark">Vouch<span>.</span></Link><nav><span>{user.user_metadata?.full_name || user.email}</span><button className="nav-button" onClick={logout}>Sign out</button></nav></header>
-    <section className="account-intro"><div><p className="small-label">Your trading activity</p><h1>See what your payments say about your business.</h1><p>Bring a CSV statement with dates, amounts and customer names, or enter transactions yourself. Vouch will show the pattern it can read and the records it leaves out.</p></div><p className="account-note">Your records are analysed on this device. Nothing is uploaded to Vouch. The score is an activity summary from the information you provide, not a verified credit score or loan decision.</p></section>
+    <section className="account-intro"><div><p className="small-label">Your trading activity</p><h1>See what your payments say about your business.</h1><p>Add transaction files from each account you use for business, or enter a payment yourself. Vouch shows the pattern it can read and the records it leaves out.</p></div><p className="account-note">Your records are analysed on this device. Nothing is uploaded to Vouch. The score is an activity summary from the information you provide, not a verified credit score or loan decision.</p></section>
     <div className="account-grid">
       <section className="score-panel account-score" aria-live="polite"><MovingWave /><div className="score-content"><p className="eyebrow">Activity score</p><div className="score-number">{result.score}<span> of 620</span></div><p>{rows.length ? `Calculated from ${rows.length} supplied records.` : 'Add activity to see your score.'}</p><div className="measure-grid"><div><strong>{result.days}</strong><span>days with sales</span></div><div><strong>{result.customers}</strong><span>named payers</span></div><div><strong>{result.returning}</strong><span>repeat payers</span></div><div><strong>{result.span}</strong><span>days covered</span></div></div></div></section>
-      <section className="import-panel"><h2>Bring your transactions</h2><p>Use a CSV file with <strong>date, direction, amount and counterparty</strong>. Credit and debit columns also work. Dates can be YYYY-MM-DD or DD/MM/YYYY. If the file has no named payer column, customer measures cannot be calculated from it.</p><label className="file-button">Choose CSV file<input type="file" accept=".csv,text/csv" onChange={importFile} /></label><button className="text-button" onClick={downloadTemplate}>Download a template</button><p className="privacy-note">Uploading replaces this session’s records. Close or reload the tab to clear them.</p></section>
+      <section className="import-panel"><h2>Bring your transactions</h2><p>In your bank or business app, open transaction history or statements, choose a date range, then export. Some apps offer Excel or PDF. If you have Excel, save the sheet as CSV before adding it here. PDF statements cannot be read here yet.</p><p>This importer needs dates, amounts, credit or debit, and preferably a named payer. You can add CSV files from several accounts, one at a time. Exact duplicate rows are skipped.</p><label className="file-button">Add CSV statement<input type="file" accept=".csv,text/csv" onChange={importFile} /></label><button className="text-button" onClick={downloadTemplate}>Download a template</button><p className="privacy-note">Use business payments where possible. Personal transfers, loans and transfers between your own accounts can distort the score. Review the rows below. Files stay in this browser tab and clear on reload.</p></section>
     </div>
     <section className="manual-panel"><div><h2>Add a transaction</h2><p>You can enter a payment or outgoing transfer when you do not have a CSV. Entering a transaction does not verify that it happened.</p></div><form onSubmit={addManual}><label>Date<input type="date" required value={manual.date} onChange={event => setManual({ ...manual, date: event.target.value })} /></label><label>Direction<select value={manual.direction} onChange={event => setManual({ ...manual, direction: event.target.value })}><option value="in">Money received</option><option value="out">Money sent</option></select></label><label>Amount (₦)<input type="number" min="0.01" step="0.01" required value={manual.amount} onChange={event => setManual({ ...manual, amount: event.target.value })} /></label><label>Customer or recipient<input required value={manual.sender} onChange={event => setManual({ ...manual, sender: event.target.value })} /></label><button className="action dark">Add transaction</button></form></section>
     {error && <p className="account-feedback error" role="alert">{error}</p>}{message && <p className="account-feedback" role="status">{message}</p>}

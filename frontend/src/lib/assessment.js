@@ -16,6 +16,11 @@ export const sampleActivity = [
   { id: 'l', day: 29, sender: 'Customer 08', amount: 3100 },
 ].map(row => ({ ...row, time: at(row.day), direction: 'in' }));
 
+export const newSales = [
+  { id: 'new-customer', day: 2, sender: 'Customer 09', amount: 5600, time: new Date(2026, 9, 2, 10).getTime(), direction: 'in' },
+  { id: 'returning-customer', day: 4, sender: 'Customer 08', amount: 3400, time: new Date(2026, 9, 4, 10).getTime(), direction: 'in' },
+];
+
 export const attempts = {
   circle: [
     { id: 'circle-in', day: 30, sender: 'Linked account', amount: 90000, time: at(30, 9), direction: 'in' },
