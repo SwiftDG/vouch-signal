@@ -15,6 +15,7 @@ import PublicProfilePage from "./pages/PublicProfilePage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import { supabase } from "./lib/supabase";
 import Brand from "./components/Brand";
+import TransactionDemoPage from "./pages/TransactionDemoPage";
 
 function AuthCallback() {
   const navigate = useNavigate();
@@ -76,6 +77,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/demo" element={<TransactionDemoPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/example/amara-cakes"
