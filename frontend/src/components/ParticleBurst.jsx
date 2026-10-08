@@ -7,7 +7,6 @@ export default function ParticleBurst() {
   const timeRef = useRef(0);
 
   useEffect(() => {
-    if (!window.matchMedia("(min-width: 1024px) and (prefers-reduced-motion: no-preference)").matches) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     let animId;
