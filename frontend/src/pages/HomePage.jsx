@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowDownRight, ArrowRight, Check, Menu, X } from "lucide-react";
 import ParticleBurst from "../components/ParticleBurst";
 import Brand from "../components/Brand";
+import RecordWave from "../components/RecordWave";
 
 const reveal = {
   initial: { opacity: 0, y: 28 },
@@ -46,7 +47,7 @@ function Header() {
 function ExampleRecord() {
   return (
     <div className="product-window" aria-label="Fictional Vouch profile preview">
-      <div className="window-top"><span className="window-dots"><i /><i /><i /></span><span>vouch / amara-cakes</span><span className="window-example">FICTIONAL EXAMPLE</span></div>
+      <div className="window-top"><span className="window-dots"><i /><i /><i /></span><span>Amara Cakes</span><span className="window-example">Illustrative profile</span></div>
       <div className="window-body">
         <div className="window-identity"><div className="window-monogram">AC</div><div><span className="eyebrow">BUSINESS PROFILE</span><h3>Amara Cakes</h3><p>Cake maker · Lagos, Nigeria</p></div></div>
         <div className="window-divider" />
@@ -61,7 +62,7 @@ function ExampleRecord() {
 function EvidenceComparison() {
   return (
     <div className="comparison-sheet">
-      <div className="comparison-head"><span>RECORD / 02</span><span>STATUS</span></div>
+      <div className="comparison-head"><span>TWO RECORDS</span><span>STATUS</span></div>
       <div className="comparison-row"><div><strong>Custom celebration cake</strong><span>Added by Amara Cakes</span></div><span className="status-chip status-self">Self-reported</span></div>
       <div className="comparison-row"><div><strong>Birthday cake order</strong><span>Added by Amara Cakes · customer response received</span></div><span className="status-chip status-confirmed">Customer confirmed</span></div>
       <p className="comparison-caption">Fictional examples. A response is a record of a claim, not identity verification.</p>
@@ -91,7 +92,7 @@ export default function HomePage() {
               <span className="product-annotation">A record you can inspect, not a score you have to trust.</span>
             </motion.div>
           </div>
-          <div className="page-rail hero-bottom"><span>01 / THE IDEA</span><a href="#the-record">See how a record works <ArrowDownRight size={16} /></a></div>
+          <div className="page-rail hero-bottom"><span>THE IDEA</span><a href="#the-record">See how a record works <ArrowDownRight size={16} /></a></div>
         </section>
 
         <section className="thesis-band" id="the-record" aria-labelledby="record-heading">
@@ -109,7 +110,7 @@ export default function HomePage() {
         </section>
 
         <motion.section className="journey-section" id="how-it-works" initial={reduceMotion ? false : { backgroundColor: "#1a1014" }} whileInView={{ backgroundColor: "#682b36" }} viewport={{ amount: 0.3, once: true }} transition={{ duration: 1.4 }} aria-labelledby="journey-heading">
-          <div className="journey-waves" aria-hidden="true"><span /><span /><span /><span /><span /><span /></div>
+          <RecordWave />
           <div className="page-rail journey-content">
             <motion.div {...motionProps}><p className="eyebrow eyebrow-light">A SIMPLE SEQUENCE</p><h2 id="journey-heading">From completed work<br />to a clearer decision.</h2><p>One link for the customer. One place for the next person to look.</p></motion.div>
             <div className="journey-steps">{stages.map((stage) => <motion.article key={stage.number} {...motionProps}><span>{stage.number}</span><div><h3>{stage.title}</h3><p>{stage.detail}</p></div><ArrowDownRight size={20} aria-hidden="true" /></motion.article>)}</div>
@@ -117,12 +118,12 @@ export default function HomePage() {
         </motion.section>
 
         <section className="audience-section" id="why-vouch" aria-labelledby="audience-heading">
-          <div className="page-rail"><p className="eyebrow">WHO IT IS FOR</p><h2 id="audience-heading">A history you can carry<br />beyond the last chat.</h2><div className="audience-grid"><article><span className="audience-index">01 / VENDORS</span><h3>When a new buyer asks if you have delivered before.</h3><p>Keep a shareable account of completed orders, with customer responses separated from your own records.</p></article><article><span className="audience-index">02 / FREELANCERS</span><h3>When past work lives across scattered platforms.</h3><p>Bring projects into one profile and ask clients to respond to a specific, plain-language description.</p></article><article><span className="audience-index">03 / VIEWERS</span><h3>When you need to know what the evidence actually says.</h3><p>Inspect the dates, work descriptions, and provenance before deciding whether to start a conversation.</p></article></div></div>
+          <div className="page-rail"><p className="eyebrow">WHO IT IS FOR</p><h2 id="audience-heading">A history you can carry<br />beyond the last chat.</h2><div className="audience-grid"><article><span className="audience-index">VENDORS</span><h3>When a new buyer asks if you have delivered before.</h3><p>Keep a shareable account of completed orders, with customer responses separated from your own records.</p></article><article><span className="audience-index">FREELANCERS</span><h3>When past work lives across scattered platforms.</h3><p>Bring projects into one profile and ask clients to respond to a specific, plain-language description.</p></article><article><span className="audience-index">VIEWERS</span><h3>When you need to know what the evidence actually says.</h3><p>Inspect the dates, work descriptions, and provenance before deciding whether to start a conversation.</p></article></div></div>
         </section>
 
         <section className="closing-section"><div className="page-rail closing-inner"><div><p className="eyebrow eyebrow-light">VOUCH IS STILL BEING TESTED</p><h2>Make your work easier<br />to understand.</h2><p>Start with one completed order or project. Share only what you are comfortable making public.</p><Link className="button button-light" to="/signup">Create your profile <ArrowRight size={18} /></Link></div><div className="closing-burst" aria-hidden="true"><ParticleBurst /></div></div></section>
       </main>
-      <footer className="site-footer"><div className="page-rail footer-inner"><Brand /><p>Portable proof for independent businesses.</p><div><Link to="/example/amara-cakes">Fictional example</Link><Link to="/login">Sign in</Link></div><span>© 2026 Vouch</span></div></footer>
+      <footer className="site-footer"><div className="page-rail footer-inner"><Brand /><p>Portable proof for independent businesses.</p><div><Link to="/example/amara-cakes">View example</Link><Link to="/login">Sign in</Link></div><span>© 2026 Vouch</span></div></footer>
     </div>
   );
 }

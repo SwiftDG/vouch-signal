@@ -305,7 +305,7 @@ export default function DashboardPage() {
                 {profile ? "Your profile" : "Your first step"}
               </p>
 
-              <h1 className="mt-3 font-['Bricolage_Grotesque'] text-4xl font-semibold">
+              <h1 className="mt-3 text-4xl font-semibold">
                 {profile ? profile.businessName : "Introduce your business"}
               </h1>
 
@@ -462,9 +462,7 @@ export default function DashboardPage() {
 
                           <p className="mt-1 text-sm text-[#6a565a]">
                             {record.evidenceType.toLowerCase()} ·{" "}
-                            {new Date(
-                              record.completedDate
-                            ).toLocaleDateString()}
+                            {new Date(`${record.completedDate.slice(0, 10)}T12:00:00`).toLocaleDateString()}
                           </p>
 
                           {record.description && (
