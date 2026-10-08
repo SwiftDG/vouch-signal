@@ -34,19 +34,25 @@ export async function profileRequest(
   }
 
   let response;
-  try {
-    response = await fetch(`${base}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-      signal,
-    });
-  } catch (error) {
-    if (error.name === "AbortError") throw error;
-    throw new ProfileApiError(
-      "Could not reach the profile service. Try again later.",
-      503,
-    );
+  // Render's free instance may be asleep on the first read. Never retry a write:
+  // a failed response does not prove that a POST/PATCH was not applied.
+  for (let attempt = 0; attempt < (method === "GET" ? 3 : 1); attempt += 1) {
+    try {
+      response = await fetch(`${base}${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal,
+      });
+      if (method !== "GET" || ![502, 503, 504].includes(response.status) || attempt === 2) break;
+    } catch (error) {
+      if (error.name === "AbortError") throw error;
+      if (method !== "GET" || attempt === 2) {
+        throw new ProfileApiError("Could not reach the profile service. Check your connection and try again.", 503);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   }
 
   const payload = await response.json().catch(() => null);
